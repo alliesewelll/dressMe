@@ -1,13 +1,19 @@
 ## postgreSQL connection
 
+from unittest.mock import Base
+
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import pandas as pd
 
-engine = create_engine('postgresql://username:password@localhost/dbname')
+## replace these with actual credentials soon
+DATABASE_URL = "postgresql://username:password@localhost/dbname"
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-Session = sessionmaker(bind=engine)
 
 df = pd.read_sql(
     "SELECT * FROM recommendations",
