@@ -65,3 +65,106 @@ FROM users AS u
 JOIN clothing_items AS c ON c.user_id = u.user_id
 GROUP BY u.user_id, u.username, c.category
 ORDER BY u.username, item_count DESC, c.category;
+
+-- 6. Average recommendation confidence by category
+SELECT
+	c.category,
+	ROUND(AVG(r.confidence_score), 4) AS avg_confidence,
+	ROUND(AVG(f.rating), 2) AS avg_rating,
+	COUNT(r.recommendation_id) AS recommendation_count
+FROM clothing_items AS c
+JOIN recommendations AS r ON r.item_id = c.item_id
+LEFT JOIN feedback AS f ON f.recommendation_id = r.recommendation_id
+GROUP BY c.category
+ORDER BY avg_confidence DESC, avg_rating DESC;
+
+-- 7. Top-performing items by buy rate
+SELECT
+	c.item_name,
+	c.brand,
+	c.category,
+	COUNT(f.feedback_id) AS feedback_count,
+	COUNT(*) FILTER (WHERE f.purchased = TRUE) AS bought_count,
+	COUNT(*) FILTER (WHERE f.purchased = FALSE) AS declined_count,
+	ROUND(
+		100.0 * COUNT(*) FILTER (WHERE f.purchased = TRUE)
+		/ NULLIF(COUNT(f.feedback_id), 0),
+		2
+	) AS buy_rate_percent,
+	ROUND(AVG(f.rating), 2) AS avg_rating
+FROM clothing_items AS c
+LEFT JOIN recommendations AS r ON r.item_id = c.item_id
+LEFT JOIN feedback AS f ON f.recommendation_id = r.recommendation_id
+GROUP BY c.item_id, c.item_name, c.brand, c.category
+HAVING COUNT(f.feedback_id) > 0
+ORDER BY buy_rate_percent DESC, avg_rating DESC NULLS LAST;
+
+-- 8. User purchase behavior summary
+SELECT
+	u.username,
+	COUNT(f.feedback_id) AS total_feedback,
+	COUNT(*) FILTER (WHERE f.purchased = TRUE) AS purchases,
+	COUNT(*) FILTER (WHERE f.purchased = FALSE) AS non_purchases,
+	ROUND(
+		100.0 * COUNT(*) FILTER (WHERE f.purchased = TRUE)
+		/ NULLIF(COUNT(f.feedback_id), 0),
+		2
+	) AS purchase_rate_percent,
+	ROUND(AVG(f.rating), 2) AS avg_rating
+FROM users AS u
+LEFT JOIN feedback AS f ON f.user_id = u.user_id
+GROUP BY u.user_id, u.username
+ORDER BY purchase_rate_percent DESC NULLS LAST, total_feedback DESC;
+
+-- 9. Total spend and average purchase price by user and category
+SELECT
+	u.username,
+	c.category,
+	COUNT(*) AS item_count,
+	ROUND(SUM(c.purchase_price), 2) AS total_spend,
+	ROUND(AVG(c.purchase_price), 2) AS avg_purchase_price
+FROM users AS u
+JOIN clothing_items AS c ON c.user_id = u.user_id
+GROUP BY u.user_id, u.username, c.category
+ORDER BY total_spend DESC NULLS LAST, item_count DESC;
+
+-- 10. Most-worn items in the wardrobe
+SELECT
+	u.username,
+	c.item_name,
+	c.category,
+	c.brand,
+	c.times_worn,
+	c.purchase_price,
+	c.purchase_date
+FROM clothing_items AS c
+JOIN users AS u ON u.user_id = c.user_id
+ORDER BY c.times_worn DESC, c.purchase_price DESC NULLS LAST
+LIMIT 10;
+
+-- 11. Style profile distribution across the app
+SELECT
+	sp.color_season,
+	sp.body_type,
+	COUNT(*) AS profile_count
+FROM style_profiles AS sp
+GROUP BY sp.color_season, sp.body_type
+ORDER BY profile_count DESC, sp.color_season, sp.body_type;
+
+-- 12. High-confidence recommendations that were not purchased
+SELECT
+	u.username,
+	c.item_name,
+	c.category,
+	r.recommendation,
+	r.confidence_score,
+	f.purchased,
+	f.rating,
+	r.recommendation_reason
+FROM recommendations AS r
+JOIN users AS u ON u.user_id = r.user_id
+JOIN clothing_items AS c ON c.item_id = r.item_id
+LEFT JOIN feedback AS f ON f.recommendation_id = r.recommendation_id
+WHERE r.confidence_score >= 0.85
+  AND (f.purchased IS NULL OR f.purchased = FALSE)
+ORDER BY r.confidence_score DESC, u.username;
