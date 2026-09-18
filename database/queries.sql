@@ -168,3 +168,39 @@ LEFT JOIN feedback AS f ON f.recommendation_id = r.recommendation_id
 WHERE r.confidence_score >= 0.85
   AND (f.purchased IS NULL OR f.purchased = FALSE)
 ORDER BY r.confidence_score DESC, u.username;
+
+-- 13. Colors that look most pleasing on each user
+-- The flattering score combines rating, positive feedback, and purchases.
+WITH color_feedback AS (
+	SELECT
+		u.user_id,
+		u.username,
+		c.primary_color,
+		COUNT(DISTINCT c.item_id) AS item_count,
+		COUNT(f.feedback_id) AS feedback_count,
+		AVG(f.rating) AS average_rating,
+		AVG(CASE WHEN f.feedback = 'LIKE' THEN 1.0 ELSE 0.0 END) AS like_rate,
+		AVG(CASE WHEN f.purchased = TRUE THEN 1.0 ELSE 0.0 END) AS purchase_rate
+	FROM users AS u
+	JOIN clothing_items AS c ON c.user_id = u.user_id
+	JOIN recommendations AS r ON r.item_id = c.item_id
+	JOIN feedback AS f ON f.recommendation_id = r.recommendation_id
+	WHERE c.primary_color IS NOT NULL
+	GROUP BY u.user_id, u.username, c.primary_color
+)
+SELECT
+	username,
+	primary_color,
+	item_count,
+	feedback_count,
+	ROUND(average_rating, 2) AS average_rating,
+	ROUND(100.0 * like_rate, 2) AS like_rate_percent,
+	ROUND(100.0 * purchase_rate, 2) AS purchase_rate_percent,
+	ROUND(
+		(average_rating / 5.0) * 0.50
+		+ like_rate * 0.30
+		+ purchase_rate * 0.20,
+		4
+	) AS flattering_score
+FROM color_feedback
+ORDER BY username, flattering_score DESC, feedback_count DESC, primary_color;
