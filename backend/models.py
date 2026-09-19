@@ -83,8 +83,8 @@ class Recommendation(Base):
 	user_id: Mapped[int] = mapped_column(
 		ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
 	)
-	item_id: Mapped[int] = mapped_column(
-		ForeignKey("clothing_items.item_id", ondelete="SET NULL"), nullable=False
+	item_id: Mapped[int | None] = mapped_column(
+		ForeignKey("clothing_items.item_id", ondelete="SET NULL")
 	)
 	recommendation: Mapped[str] = mapped_column(String(255), nullable=False)
 	confidence_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
@@ -95,7 +95,7 @@ class Recommendation(Base):
 	created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
 
 	user: Mapped[User] = relationship(back_populates="recommendations")
-	item: Mapped[ClothingItem] = relationship(back_populates="recommendations")
+	item: Mapped[ClothingItem | None] = relationship(back_populates="recommendations")
 	feedback: Mapped[list["Feedback"]] = relationship(
 		back_populates="recommendation", cascade="all, delete-orphan"
 	)

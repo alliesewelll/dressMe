@@ -44,7 +44,7 @@ CREATE TABLE clothing_items (
 CREATE TABLE recommendations (
     recommendation_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    item_id INT NOT NULL,
+    item_id INT,
 
     recommendation VARCHAR(255) NOT NULL CHECK (recommendation IN ('BUY', 'MAYBE', 'SKIP')),
     confidence_score DECIMAL(5, 4),
