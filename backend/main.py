@@ -1,11 +1,16 @@
-from fastapi import FastAPI
-from database import engine, Base
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+
+import models
+import schemas
+
+from database import engine, get_db
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def home():
     ## return to this and fix missage maybe?
-    return {"message": "Welcome to the DressMe API!"}
+    return {"message": "Backend is running"}
