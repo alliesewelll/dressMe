@@ -38,6 +38,24 @@ unknown fields are rejected. An unknown user returns 404; an empty wardrobe retu
 These are local prototype endpoints: user IDs select records, and authentication
 and access controls are not implemented yet.
 
+## Edit a wardrobe item
+
+Use `PATCH /users/{user_id}/wardrobe/{item_id}` with IDs from the wardrobe list:
+
+```json
+{
+  "item_name": "Blue linen shirt",
+  "material": "Linen",
+  "times_worn": 6
+}
+```
+
+Only supplied fields change. `times_worn` sets the total wear count, rather than
+incrementing it. Send `null` to clear optional details such as brand or price;
+item name and wear count cannot be null. Empty updates and invalid values return
+422. Missing items or items belonging to a different user return 404.
+This checks the selected item's user ID; login-based authorization is still pending.
+
 ## Save and retrieve style preferences
 
 Use `PATCH /users/{user_id}/style-profile` in `/docs` to create a profile or

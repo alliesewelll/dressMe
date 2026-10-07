@@ -60,6 +60,30 @@ def add_clothing_item(user_id: int, item: schemas.ClothingItemCreate, db: Sessio
     return clothing_item
 
 
+@app.patch("/users/{user_id}/wardrobe/{item_id}", response_model=schemas.ClothingItemResponse)
+def update_clothing_item(
+    user_id: int,
+    item_id: int,
+    changes: schemas.ClothingItemUpdate,
+    db: Session = Depends(get_db),
+):
+    require_user(user_id, db)
+    item = db.scalar(select(models.ClothingItem).where(
+        models.ClothingItem.user_id == user_id,
+        models.ClothingItem.item_id == item_id,
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="Clothing item not found")
+    updates = changes.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=422, detail="Provide at least one clothing detail")
+    for field, value in updates.items():
+        setattr(item, field, value)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 @app.get("/users/{user_id}/wardrobe", response_model=list[schemas.ClothingItemResponse])
 def list_wardrobe(
     user_id: int,

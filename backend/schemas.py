@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, field_validator
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -56,6 +56,18 @@ class ClothingItemCreate(BaseModel):
     times_worn: int = Field(default=0, ge=0, le=2147483647)
     purchase_date: date | None = None
     image_url: str | None = None
+
+
+class ClothingItemUpdate(ClothingItemCreate):
+    """Reuse creation constraints, but allow the name to be omitted."""
+    item_name: str | None = Field(default=None, min_length=1, max_length=100)
+
+    @field_validator("item_name")
+    @classmethod
+    def name_cannot_be_cleared(cls, value):
+        if value is None:
+            raise ValueError("Item name cannot be null")
+        return value
 
 
 class ClothingItemResponse(ClothingItemCreate):

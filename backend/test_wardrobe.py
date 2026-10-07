@@ -55,6 +55,42 @@ class WardrobeTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 422)
         self.assertEqual(self.client.get("/users/1/wardrobe").json(), [])
 
+    def test_edit_item_preserves_omitted_fields_and_clears_optional_fields(self):
+        original = self.client.post("/users/1/wardrobe", json={
+            "item_name": "Shirt", "brand": "Example", "times_worn": 5,
+            "purchase_price": "25.50"
+        }).json()
+        path = f"/users/1/wardrobe/{original['item_id']}"
+        response = self.client.patch(path, json={"item_name": " Blue shirt ", "brand": None})
+        self.assertEqual(response.status_code, 200)
+        edited = response.json()
+        self.assertEqual(edited["item_name"], "Blue shirt")
+        self.assertIsNone(edited["brand"])
+        self.assertEqual(edited["times_worn"], 5)
+        self.assertEqual(edited["purchase_price"], "25.50")
+        self.assertEqual(edited["created_at"], original["created_at"])
+        response = self.client.patch(path, json={"times_worn": 6})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [response.json()])
+
+    def test_edit_rejects_invalid_input_without_changing_item(self):
+        original = self.client.post("/users/1/wardrobe", json={"item_name": "Shirt"}).json()
+        path = f"/users/1/wardrobe/{original['item_id']}"
+        for payload in [{}, {"item_name": None}, {"item_name": " "},
+                        {"times_worn": None}, {"times_worn": -1},
+                        {"purchase_price": "1.001"}, {"purchase_price": -1},
+                        {"category": "x" * 51}, {"user_id": 2}]:
+            with self.subTest(payload=payload):
+                self.assertEqual(self.client.patch(path, json=payload).status_code, 422)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [original])
+
+    def test_edit_requires_item_to_belong_to_selected_user(self):
+        original = self.client.post("/users/1/wardrobe", json={"item_name": "Shirt"}).json()
+        for path in [f"/users/2/wardrobe/{original['item_id']}",
+                     "/users/1/wardrobe/999", "/users/999/wardrobe/1"]:
+            self.assertEqual(self.client.patch(path, json={"times_worn": 10}).status_code, 404)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [original])
+
     def test_pagination(self):
         for name in ["First", "Second", "Third"]:
             self.client.post("/users/1/wardrobe", json={"item_name": name})
