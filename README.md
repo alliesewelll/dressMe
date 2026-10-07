@@ -38,6 +38,33 @@ unknown fields are rejected. An unknown user returns 404; an empty wardrobe retu
 These are local prototype endpoints: user IDs select records, and authentication
 and access controls are not implemented yet.
 
+## Save and retrieve style preferences
+
+Use `PATCH /users/{user_id}/style-profile` in `/docs` to create a profile or
+update selected preferences for an existing user:
+
+```json
+{
+  "color_season": "Autumn",
+  "undertone": "Warm",
+  "preferred_styles": "Classic, relaxed, earth tones"
+}
+```
+
+`body_type` is also optional. `preferred_styles` is free-form text, consistent
+with the existing database. These preferences are supplied by the user, not
+automatically inferred. The endpoint returns the saved profile.
+
+Use `GET /users/{user_id}/style-profile` to retrieve it. Missing users or profiles
+return 404. Updates preserve omitted fields; send `null` to clear a field.
+Empty requests, blank strings, unknown fields, and overly long values return 422.
+Each user has one profile; repeated saves update the same record.
+
+User schemas now use `username` to match the database. Signup input represents
+a private `password`; a future signup handler must hash it into `password_hash`.
+User responses exclude passwords and hashes. Signup/login endpoints are still
+not implemented, and preferences use the same local-prototype access model as the wardrobe.
+
 ## Tests
 
 From the project root, using an environment with the backend dependencies and `httpx`:

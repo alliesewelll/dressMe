@@ -13,13 +13,41 @@ models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def home():
-    ## return to this and fix missage maybe?
     return {"message": "Backend is running"}
 
 
 def require_user(user_id: int, db: Session):
     if db.get(models.User, user_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get("/users/{user_id}/style-profile", response_model=schemas.StyleProfileResponse)
+def get_style_profile(user_id: int, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Style profile not found")
+    return profile
+
+
+@app.patch("/users/{user_id}/style-profile", response_model=schemas.StyleProfileResponse)
+def save_style_profile(user_id: int, preferences: schemas.StyleProfileSave, db: Session = Depends(get_db)):
+    # Serialize saves for this user in PostgreSQL, including the first profile creation.
+    user = db.scalar(select(models.User).where(models.User.user_id == user_id).with_for_update())
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    changes = preferences.model_dump(exclude_unset=True)
+    if not changes:
+        raise HTTPException(status_code=422, detail="Provide at least one preference")
+    profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
+    if profile is None:
+        profile = models.StyleProfile(user_id=user_id)
+        db.add(profile)
+    for field, value in changes.items():
+        setattr(profile, field, value)
+    db.commit()
+    db.refresh(profile)
+    return profile
 
 
 @app.post("/users/{user_id}/wardrobe", response_model=schemas.ClothingItemResponse, status_code=201)

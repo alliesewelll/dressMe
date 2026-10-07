@@ -1,19 +1,44 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 from datetime import date, datetime
 from decimal import Decimal
 
 class UserCreate(BaseModel):
-    name: str
-    email: EmailStr
-    
+    """Signup input; a future signup handler must hash the password before storage."""
+    model_config = ConfigDict(extra="forbid")
+
+    username: str = Field(min_length=1, max_length=50, pattern=r"^\S+$")
+    email: EmailStr = Field(max_length=100)
+    password: SecretStr = Field(min_length=8, max_length=128)
+
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     user_id: int
-    name: str
+    username: str
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+
+class StyleProfileSave(BaseModel):
+    """Only supplied fields change; explicit null clears a preference."""
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    color_season: str | None = Field(default=None, min_length=1, max_length=50)
+    body_type: str | None = Field(default=None, min_length=1, max_length=50)
+    undertone: str | None = Field(default=None, min_length=1, max_length=50)
+    preferred_styles: str | None = Field(default=None, min_length=1, max_length=2000)
+
+
+class StyleProfileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    profile_id: int
+    user_id: int
+    color_season: str | None
+    body_type: str | None
+    undertone: str | None
+    preferred_styles: str | None
+    created_at: datetime
 
 
 class ClothingItemCreate(BaseModel):
