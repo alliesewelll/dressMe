@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Response
 from sqlalchemy import select, func, case
 from sqlalchemy.orm import Session
 
@@ -82,6 +82,21 @@ def update_clothing_item(
     db.commit()
     db.refresh(item)
     return item
+
+
+@app.delete("/users/{user_id}/wardrobe/{item_id}", status_code=204, response_class=Response)
+def delete_clothing_item(user_id: int, item_id: int, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    item = db.scalar(select(models.ClothingItem).where(
+        models.ClothingItem.user_id == user_id,
+        models.ClothingItem.item_id == item_id,
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="Clothing item not found")
+    # The relationship clears recommendation.item_id, preserving historical feedback.
+    db.delete(item)
+    db.commit()
+    return Response(status_code=204)
 
 
 @app.get("/users/{user_id}/wardrobe/summary", response_model=schemas.WardrobeSummary)

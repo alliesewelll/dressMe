@@ -38,6 +38,18 @@ unknown fields are rejected. An unknown user returns 404; an empty wardrobe retu
 These are local prototype endpoints: user IDs select records, and authentication
 and access controls are not implemented yet.
 
+## Remove a wardrobe item
+
+Use `DELETE /users/{user_id}/wardrobe/{item_id}` in `/docs` with an item ID from
+the wardrobe list. Success returns 204 with no response body. Missing users,
+missing items, and items belonging to a different user return 404.
+
+Deletion permanently removes the item; there is no undo. The wardrobe list and
+summary exclude it immediately. Past recommendations and feedback remain stored,
+but the recommendation's item reference becomes null and the clothing details
+are no longer available. This checks the selected user's item ownership;
+login-based authorization is still pending.
+
 ## Wardrobe summary
 
 Use `GET /users/{user_id}/wardrobe/summary` in `/docs` for an overview of the

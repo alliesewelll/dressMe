@@ -9,7 +9,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_database_dir.name}/test.db"
 from fastapi.testclient import TestClient
 from main import app
 from database import engine, SessionLocal
-from models import Base, User, StyleProfile
+from models import Base, User, StyleProfile, Recommendation, Feedback
 from schemas import UserCreate, UserResponse
 from pydantic import ValidationError
 from sqlalchemy import select, func
@@ -61,6 +61,49 @@ class WardrobeTests(unittest.TestCase):
             "total_recorded_spend": "0.00", "total_wears": 0, "unworn_item_count": 0,
         })
         self.assertEqual(self.client.get("/users/999/wardrobe/summary").status_code, 404)
+
+    def test_delete_item_updates_wardrobe_and_summary(self):
+        item = self.client.post("/users/1/wardrobe", json={
+            "item_name": "Old coat", "purchase_price": "50.00", "times_worn": 10
+        }).json()
+        path = f"/users/1/wardrobe/{item['item_id']}"
+        response = self.client.delete(path)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.content, b"")
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [])
+        summary = self.client.get("/users/1/wardrobe/summary").json()
+        self.assertEqual(summary["item_count"], 0)
+        self.assertEqual(summary["total_recorded_spend"], "0.00")
+        self.assertEqual(summary["total_wears"], 0)
+        self.assertEqual(self.client.delete(path).status_code, 404)
+
+    def test_delete_rejects_wrong_user_and_missing_item(self):
+        item = self.client.post("/users/1/wardrobe", json={"item_name": "Keep me"}).json()
+        for path in [f"/users/2/wardrobe/{item['item_id']}",
+                     "/users/1/wardrobe/999", "/users/999/wardrobe/1"]:
+            self.assertEqual(self.client.delete(path).status_code, 404)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [item])
+
+    def test_delete_preserves_recommendations_and_feedback(self):
+        item = self.client.post("/users/1/wardrobe", json={"item_name": "Coat"}).json()
+        with SessionLocal() as db:
+            recommendation = Recommendation(user_id=1, item_id=item["item_id"],
+                                            recommendation="BUY", recommendation_reason="A versatile coat")
+            db.add(recommendation)
+            db.flush()
+            feedback = Feedback(user_id=1, recommendation_id=recommendation.recommendation_id,
+                                feedback="LIKE", rating=5)
+            db.add(feedback)
+            db.commit()
+            recommendation_id = recommendation.recommendation_id
+            feedback_id = feedback.feedback_id
+        self.assertEqual(self.client.delete(f"/users/1/wardrobe/{item['item_id']}").status_code, 204)
+        with SessionLocal() as db:
+            saved = db.get(Recommendation, recommendation_id)
+            self.assertIsNotNone(saved)
+            self.assertIsNone(saved.item_id)
+            self.assertEqual(saved.recommendation_reason, "A versatile coat")
+            self.assertEqual(db.get(Feedback, feedback_id).rating, 5)
 
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
