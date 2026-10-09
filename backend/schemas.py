@@ -70,6 +70,15 @@ class ClothingItemUpdate(ClothingItemCreate):
         return value
 
 
+class WardrobeSummary(BaseModel):
+    user_id: int
+    item_count: int
+    priced_item_count: int
+    total_recorded_spend: Decimal
+    total_wears: int
+    unworn_item_count: int
+
+
 class ClothingItemResponse(ClothingItemCreate):
     model_config = ConfigDict(from_attributes=True)
 

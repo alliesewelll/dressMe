@@ -38,6 +38,34 @@ unknown fields are rejected. An unknown user returns 404; an empty wardrobe retu
 These are local prototype endpoints: user IDs select records, and authentication
 and access controls are not implemented yet.
 
+## Wardrobe summary
+
+Use `GET /users/{user_id}/wardrobe/summary` in `/docs` for an overview of the
+user's entire wardrobe: item count, number of items with a recorded price,
+total recorded spending, total wears, and items with zero recorded wears.
+
+Missing prices are excluded from spending; a recorded zero price still counts
+as priced. Spending is a decimal string and assumes all prices use the same
+currency. Wear totals reflect manually recorded counts. An empty wardrobe
+returns zero totals; an unknown user returns 404. The summary includes all of
+the user's items regardless of wardrobe-list filters or pagination, and reflects
+edits on the next request.
+
+## Search your wardrobe
+
+The wardrobe list accepts optional `search`, `category`, and `color` filters:
+
+```text
+GET /users/1/wardrobe?search=shirt&category=Tops&color=Blue
+```
+
+Search finds text anywhere in an item's name. Category and color match the whole
+value. All three ignore case and trim surrounding spaces; blank filters are ignored.
+Combine filters to narrow results, then use `limit` and `offset` to page through
+the matches. Results remain newest first and limited to the selected user.
+No matches returns `[]`. Search characters such as `%` and `_` are treated literally.
+Try these fields on the GET wardrobe endpoint in `/docs`.
+
 ## Edit a wardrobe item
 
 Use `PATCH /users/{user_id}/wardrobe/{item_id}` with IDs from the wardrobe list:

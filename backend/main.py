@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, func, case
 from sqlalchemy.orm import Session
 
 import models
@@ -84,17 +84,40 @@ def update_clothing_item(
     return item
 
 
+@app.get("/users/{user_id}/wardrobe/summary", response_model=schemas.WardrobeSummary)
+def get_wardrobe_summary(user_id: int, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    item = models.ClothingItem
+    totals = db.execute(select(
+        func.count(item.item_id).label("item_count"),
+        func.count(item.purchase_price).label("priced_item_count"),
+        func.coalesce(func.sum(item.purchase_price), 0).label("total_recorded_spend"),
+        func.coalesce(func.sum(item.times_worn), 0).label("total_wears"),
+        func.coalesce(func.sum(case((item.times_worn == 0, 1), else_=0)), 0).label("unworn_item_count"),
+    ).where(item.user_id == user_id)).mappings().one()
+    return {"user_id": user_id, **totals}
+
+
 @app.get("/users/{user_id}/wardrobe", response_model=list[schemas.ClothingItemResponse])
 def list_wardrobe(
     user_id: int,
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, max_length=100, description="Case-insensitive text in the item name"),
+    category: str | None = Query(default=None, max_length=50, description="Exact category, ignoring case"),
+    color: str | None = Query(default=None, max_length=50, description="Exact primary color, ignoring case"),
     db: Session = Depends(get_db),
 ):
     require_user(user_id, db)
+    query = select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)
+    if search and search.strip():
+        query = query.where(models.ClothingItem.item_name.icontains(search.strip(), autoescape=True))
+    for column, value in [(models.ClothingItem.category, category),
+                          (models.ClothingItem.primary_color, color)]:
+        if value and value.strip():
+            query = query.where(func.lower(column) == value.strip().lower())
     return db.scalars(
-        select(models.ClothingItem)
-        .where(models.ClothingItem.user_id == user_id)
+        query
         .order_by(models.ClothingItem.item_id.desc())
         .offset(offset)
         .limit(limit)

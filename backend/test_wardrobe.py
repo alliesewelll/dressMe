@@ -30,6 +30,38 @@ class WardrobeTests(unittest.TestCase):
     def tearDown(self):
         self.client.close()
 
+    def test_summary_totals_and_missing_prices(self):
+        for payload in [
+            {"item_name": "Shirt", "purchase_price": "19.95", "times_worn": 3},
+            {"item_name": "Jeans", "purchase_price": "40.10", "times_worn": 2},
+            {"item_name": "Gift", "purchase_price": "0.00"},
+            {"item_name": "Unknown price"},
+        ]:
+            self.assertEqual(self.client.post("/users/1/wardrobe", json=payload).status_code, 201)
+        self.client.post("/users/2/wardrobe", json={"item_name": "Other user's coat", "purchase_price": "100", "times_worn": 50})
+        response = self.client.get("/users/1/wardrobe/summary")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            "user_id": 1, "item_count": 4, "priced_item_count": 3,
+            "total_recorded_spend": "60.05", "total_wears": 5, "unworn_item_count": 2,
+        })
+        item_id = self.client.get("/users/1/wardrobe").json()[0]["item_id"]
+        self.client.patch(f"/users/1/wardrobe/{item_id}", json={"purchase_price": "10.00", "times_worn": 1})
+        updated = self.client.get("/users/1/wardrobe/summary").json()
+        self.assertEqual(updated["total_recorded_spend"], "70.05")
+        self.assertEqual(updated["priced_item_count"], 4)
+        self.assertEqual(updated["total_wears"], 6)
+        self.assertEqual(updated["unworn_item_count"], 1)
+
+    def test_summary_empty_wardrobe_and_missing_user(self):
+        response = self.client.get("/users/1/wardrobe/summary")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            "user_id": 1, "item_count": 0, "priced_item_count": 0,
+            "total_recorded_spend": "0.00", "total_wears": 0, "unworn_item_count": 0,
+        })
+        self.assertEqual(self.client.get("/users/999/wardrobe/summary").status_code, 404)
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"
@@ -90,6 +122,34 @@ class WardrobeTests(unittest.TestCase):
                      "/users/1/wardrobe/999", "/users/999/wardrobe/1"]:
             self.assertEqual(self.client.patch(path, json={"times_worn": 10}).status_code, 404)
         self.assertEqual(self.client.get("/users/1/wardrobe").json(), [original])
+
+    def test_wardrobe_search_and_combined_filters(self):
+        for user_id, name, category, color in [
+            (1, "Blue shirt", "Tops", "Blue"),
+            (1, "Blue jeans", "Bottoms", "Blue"),
+            (1, "White shirt", "Tops", "White"),
+            (2, "Blue shirt", "Tops", "Blue"),
+        ]:
+            self.client.post(f"/users/{user_id}/wardrobe", json={
+                "item_name": name, "category": category, "primary_color": color
+            })
+        path = "/users/1/wardrobe"
+        response = self.client.get(path, params={"search": " SHIRT ", "category": " tops ", "color": "BLUE"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["item_name"] for item in response.json()], ["Blue shirt"])
+        page = self.client.get(path, params={"category": "tops", "limit": 1, "offset": 1})
+        self.assertEqual([item["item_name"] for item in page.json()], ["Blue shirt"])
+        self.assertEqual(self.client.get(path, params={"color": "green"}).json(), [])
+        self.assertEqual(len(self.client.get(path, params={"search": " ", "category": ""}).json()), 3)
+
+    def test_search_treats_wildcards_as_literal_text(self):
+        for name in ["100% cotton", "Size_M shirt", "Plain shirt"]:
+            self.client.post("/users/1/wardrobe", json={"item_name": name})
+        for term, expected in [("%", "100% cotton"), ("_", "Size_M shirt")]:
+            response = self.client.get("/users/1/wardrobe", params={"search": term})
+            self.assertEqual([item["item_name"] for item in response.json()], [expected])
+        for field, length in [("search", 101), ("category", 51), ("color", 51)]:
+            self.assertEqual(self.client.get("/users/1/wardrobe", params={field: "x" * length}).status_code, 422)
 
     def test_pagination(self):
         for name in ["First", "Second", "Third"]:
