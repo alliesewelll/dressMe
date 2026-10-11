@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Query, Response
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import Session
 
 import models
@@ -79,6 +79,31 @@ def update_clothing_item(
         raise HTTPException(status_code=422, detail="Provide at least one clothing detail")
     for field, value in updates.items():
         setattr(item, field, value)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@app.post("/users/{user_id}/wardrobe/{item_id}/wear", response_model=schemas.ClothingItemResponse)
+def record_wear(user_id: int, item_id: int, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    # Increment in the database so simultaneous wear requests don't lose updates.
+    item = db.scalar(
+        update(models.ClothingItem)
+        .where(models.ClothingItem.user_id == user_id,
+               models.ClothingItem.item_id == item_id,
+               func.coalesce(models.ClothingItem.times_worn, 0) < 2147483647)
+        .values(times_worn=func.coalesce(models.ClothingItem.times_worn, 0) + 1)
+        .returning(models.ClothingItem)
+    )
+    if item is None:
+        existing = db.scalar(select(models.ClothingItem.item_id).where(
+            models.ClothingItem.user_id == user_id,
+            models.ClothingItem.item_id == item_id,
+        ))
+        if existing is None:
+            raise HTTPException(status_code=404, detail="Clothing item not found")
+        raise HTTPException(status_code=409, detail="Wear count has reached its maximum")
     db.commit()
     db.refresh(item)
     return item

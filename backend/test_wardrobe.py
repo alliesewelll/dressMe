@@ -62,6 +62,34 @@ class WardrobeTests(unittest.TestCase):
         })
         self.assertEqual(self.client.get("/users/999/wardrobe/summary").status_code, 404)
 
+    def test_record_wear_increments_and_updates_summary(self):
+        item = self.client.post("/users/1/wardrobe", json={"item_name": "Shirt"}).json()
+        path = f"/users/1/wardrobe/{item['item_id']}/wear"
+        for expected in [1, 2]:
+            response = self.client.post(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {**item, "times_worn": expected})
+        self.assertEqual(self.client.get("/users/1/wardrobe").json()[0]["times_worn"], 2)
+        summary = self.client.get("/users/1/wardrobe/summary").json()
+        self.assertEqual(summary["total_wears"], 2)
+        self.assertEqual(summary["unworn_item_count"], 0)
+
+    def test_record_wear_rejects_missing_or_other_users_item(self):
+        item = self.client.post("/users/1/wardrobe", json={"item_name": "Shirt"}).json()
+        for path in [f"/users/2/wardrobe/{item['item_id']}/wear",
+                     "/users/1/wardrobe/999/wear", "/users/999/wardrobe/1/wear"]:
+            self.assertEqual(self.client.post(path).status_code, 404)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json(), [item])
+
+    def test_record_wear_handles_maximum_count(self):
+        item = self.client.post("/users/1/wardrobe", json={
+            "item_name": "Shirt", "times_worn": 2147483646
+        }).json()
+        path = f"/users/1/wardrobe/{item['item_id']}/wear"
+        self.assertEqual(self.client.post(path).json()["times_worn"], 2147483647)
+        self.assertEqual(self.client.post(path).status_code, 409)
+        self.assertEqual(self.client.get("/users/1/wardrobe").json()[0]["times_worn"], 2147483647)
+
     def test_delete_item_updates_wardrobe_and_summary(self):
         item = self.client.post("/users/1/wardrobe", json={
             "item_name": "Old coat", "purchase_price": "50.00", "times_worn": 10

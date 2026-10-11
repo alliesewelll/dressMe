@@ -38,6 +38,19 @@ unknown fields are rejected. An unknown user returns 404; an empty wardrobe retu
 These are local prototype endpoints: user IDs select records, and authentication
 and access controls are not implemented yet.
 
+## Record a wear
+
+Use `POST /users/{user_id}/wardrobe/{item_id}/wear` in `/docs` with no request
+body to increase the item's `times_worn` by one. The response contains the updated
+item, and the wardrobe summary reflects the new total immediately.
+
+Each successful request records another wear, including repeated requests; this
+does not store wear dates or deduplicate by day. Use the existing PATCH endpoint
+to correct accidental counts. Increments happen in the database to avoid lost
+updates between simultaneous wear requests. Unknown users or items, and items
+belonging to another user, return 404. A count at the maximum integer value returns
+409. Login-based authorization is still pending.
+
 ## Remove a wardrobe item
 
 Use `DELETE /users/{user_id}/wardrobe/{item_id}` in `/docs` with an item ID from
