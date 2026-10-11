@@ -133,6 +133,29 @@ class WardrobeTests(unittest.TestCase):
             self.assertEqual(saved.recommendation_reason, "A versatile coat")
             self.assertEqual(db.get(Feedback, feedback_id).rating, 5)
 
+    def test_style_suggestions_use_saved_profile(self):
+        self.client.patch("/users/1/style-profile", json={
+            "color_season": " Autumn ", "undertone": "Cool", "body_type": "Hourglass"
+        })
+        response = self.client.get("/users/1/style-suggestions")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["palette"], ["terracotta", "olive", "camel"])
+        self.assertEqual(response.json()["suggestions"][0]["item_name"], "wrap top")
+        self.assertIn("autumn", response.json()["suggestions"][0]["reason"])
+        self.assertEqual(self.client.get("/users/2/style-suggestions").status_code, 404)
+        self.assertEqual(self.client.get("/users/999/style-suggestions").status_code, 404)
+
+    def test_style_suggestion_fallbacks_and_normalization(self):
+        from styling import suggest_items, SILHOUETTES
+        result = suggest_items("unknown", " COOL ", "inverted-triangle")
+        self.assertEqual(result["palette"], ["blue", "lavender", "berry"])
+        self.assertEqual(result["suggestions"][1]["item_name"], "wide-leg trousers")
+        general = suggest_items(None, "unrecognized", None)
+        self.assertEqual(len(general["suggestions"]), 2)
+        self.assertTrue(any("general silhouettes" in note for note in general["notes"]))
+        for shape in SILHOUETTES:
+            self.assertEqual(len(suggest_items("Spring", None, shape)["suggestions"]), 2)
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"

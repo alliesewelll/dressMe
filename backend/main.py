@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
+from styling import suggest_items
 
 from database import engine, get_db
 
@@ -28,6 +29,12 @@ def get_style_profile(user_id: int, db: Session = Depends(get_db)):
     if profile is None:
         raise HTTPException(status_code=404, detail="Style profile not found")
     return profile
+
+
+@app.get("/users/{user_id}/style-suggestions", response_model=schemas.StyleSuggestions)
+def get_style_suggestions(user_id: int, db: Session = Depends(get_db)):
+    profile = get_style_profile(user_id, db)
+    return suggest_items(profile.color_season, profile.undertone, profile.body_type)
 
 
 @app.patch("/users/{user_id}/style-profile", response_model=schemas.StyleProfileResponse)

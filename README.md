@@ -136,6 +136,25 @@ a private `password`; a future signup handler must hash it into `password_hash`.
 User responses exclude passwords and hashes. Signup/login endpoints are still
 not implemented, and preferences use the same local-prototype access model as the wardrobe.
 
+## Personalized styling ideas
+
+`GET /users/{user_id}/style-suggestions` returns a palette and two generic
+clothing suggestions with explanations, using the user's saved style profile.
+For example, an Autumn / Hourglass profile suggests terracotta, olive, and camel
+with a wrap top and a belted jacket.
+
+The standalone `suggest_items(color_season, undertone, body_type)` function in
+`backend/styling.py` contains editable starter rules. Spring, Summer, Autumn,
+and Winter take precedence over warm, cool, or neutral undertones. Supported body
+types are hourglass, pear, rectangle, athletic, apple, and inverted triangle.
+Unknown values receive general suggestions with explanatory notes. A missing
+user or profile returns 404.
+
+These are subjective styling ideas based on self-reported preferences, not photo
+analysis or predictions of attractiveness. Skin depth does not determine undertone.
+This initial function does not use `preferred_styles`, match real products or
+wardrobe items, or save recommendations. No new database tables are required.
+
 ## Tests
 
 From the project root, using an environment with the backend dependencies and `httpx`:

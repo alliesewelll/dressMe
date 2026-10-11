@@ -70,6 +70,19 @@ class ClothingItemUpdate(ClothingItemCreate):
         return value
 
 
+class ItemSuggestion(BaseModel):
+    item_name: str
+    category: str
+    suggested_colors: list[str]
+    reason: str
+
+
+class StyleSuggestions(BaseModel):
+    palette: list[str]
+    suggestions: list[ItemSuggestion]
+    notes: list[str]
+
+
 class WardrobeSummary(BaseModel):
     user_id: int
     item_count: int
