@@ -3,7 +3,30 @@
 A personal style app being built around style profiles, a digital wardrobe, and
 eventual Buy / Maybe / Skip recommendations.
 
-## Try the wardrobe API
+## Frontend preview
+
+Start the interactive sample wardrobe from the project root (no database needed):
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory frontend
+```
+
+Open http://127.0.0.1:8765. The responsive dashboard includes illustrated clothing
+cards, search and category filters, adding pieces, recording wears, a style profile
+editor, palette swatches, and styling ideas. Demo changes reset on refresh.
+Illustrations are placeholders, not photos of actual clothing. Fonts load from
+Google Fonts with local serif/sans-serif fallbacks.
+
+For saved data, start the backend as described below and open
+http://127.0.0.1:8000/app/. Choose **Demo wardrobe → Connect to backend** and enter
+an existing user ID. Live mode calls the existing API on the same origin; this
+frontend does not add authentication. The standalone preview only supports demo
+mode. Item editing/deletion and image uploads are not yet exposed in the dashboard.
+
+Demo palette and silhouette data in `frontend/styling-data.js` mirrors the rules
+in `backend/styling.py`; keep these in sync when changing demo styling rules.
+
+## Backend setup
 
 Configure `DATABASE_URL` in a root `.env` file using `.env.example` as a guide.
 Use an existing PostgreSQL user record (the sample data uses IDs 1–4).

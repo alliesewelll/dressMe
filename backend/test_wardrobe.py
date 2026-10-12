@@ -156,6 +156,13 @@ class WardrobeTests(unittest.TestCase):
         for shape in SILHOUETTES:
             self.assertEqual(len(suggest_items("Spring", None, shape)["suggestions"]), 2)
 
+    def test_frontend_is_served_with_assets(self):
+        response = self.client.get("/app/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your wardrobe", response.text)
+        for asset in ["app.js", "style.css", "styling-data.js"]:
+            self.assertEqual(self.client.get(f"/app/{asset}").status_code, 200)
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"
