@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, Query, Response
 from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import Session
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 import models
 import schemas
@@ -9,6 +11,7 @@ from styling import suggest_items
 from database import engine, get_db
 
 app = FastAPI()
+app.mount("/app", StaticFiles(directory=Path(__file__).resolve().parent.parent / "frontend", html=True), name="frontend")
 
 models.Base.metadata.create_all(bind=engine)
 
