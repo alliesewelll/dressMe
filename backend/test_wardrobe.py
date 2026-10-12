@@ -163,6 +163,30 @@ class WardrobeTests(unittest.TestCase):
         for asset in ["app.js", "style.css", "styling-data.js"]:
             self.assertEqual(self.client.get(f"/app/{asset}").status_code, 200)
 
+    def test_all_sixteen_color_palettes_round_trip(self):
+        from styling import SEASON_CATALOG
+        self.assertEqual(len(SEASON_CATALOG), 16)
+        for entry in SEASON_CATALOG:
+            with self.subTest(season=entry["name"]):
+                response = self.client.patch("/users/1/style-profile", json={
+                    "color_season": entry["name"], "undertone": "Neutral"
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(self.client.get("/users/1/style-profile").json()["color_season"], entry["name"])
+                result = self.client.get("/users/1/style-suggestions").json()
+                self.assertEqual(result["palette"], [c["name"] for c in entry["colors"]])
+                self.assertEqual(result["suggestions"][0]["suggested_colors"], result["palette"])
+
+    def test_demo_catalog_matches_backend_rules(self):
+        import json
+        from pathlib import Path
+        from styling import PALETTES, SEASON_CATALOG, suggest_items
+        source = (Path(__file__).resolve().parent.parent / "frontend" / "styling-data.js").read_text()
+        data = json.loads(source.split("const stylingData = ", 1)[1].strip().removesuffix(";"))
+        self.assertEqual(data["catalog"], SEASON_CATALOG)
+        self.assertEqual(data["palettes"], PALETTES)
+        self.assertEqual(suggest_items(" LIGHT-SPRING ")["palette"], PALETTES["light spring"])
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"

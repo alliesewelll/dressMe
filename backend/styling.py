@@ -1,5 +1,11 @@
 """Editable styling heuristics, not an assessment of someone's appearance."""
 
+import json
+from pathlib import Path
+
+# Shared with the frontend so names and swatches have a single source of truth.
+SEASON_CATALOG = json.loads((Path(__file__).resolve().parent.parent / "frontend" / "palettes.json").read_text())
+
 PALETTES = {
     "spring": ["peach", "coral", "warm green"],
     "summer": ["dusty rose", "lavender", "soft blue"],
@@ -9,6 +15,9 @@ PALETTES = {
     "cool": ["blue", "lavender", "berry"],
     "neutral": ["teal", "soft white", "navy"],
 }
+
+PALETTES.update({entry["name"].lower(): [color["name"] for color in entry["colors"]]
+                 for entry in SEASON_CATALOG})
 
 # Optional silhouette ideas, phrased as effects rather than corrections to a body.
 SILHOUETTES = {
@@ -38,7 +47,7 @@ def suggest_items(color_season=None, undertone=None, body_type=None):
 
     season, tone, shape = map(normalize, (color_season, undertone, body_type))
     notes = ["These are optional styling ideas, not rules about what you can wear."]
-    if season in ("spring", "summer", "autumn", "winter"):
+    if season in PALETTES and season not in ("warm", "cool", "neutral"):
         palette = PALETTES[season]
         basis = f"your saved {season} color season"
     elif tone in ("warm", "cool", "neutral"):

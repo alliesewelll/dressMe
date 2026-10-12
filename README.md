@@ -187,3 +187,15 @@ python -m unittest discover -s backend -p 'test_*.py'
 ```
 
 Tests use a temporary SQLite database and do not touch your PostgreSQL data.
+
+## 16-palette personal color guide
+
+The frontend features a Korean-inspired personal color guide with the 16 subtypes
+selected for dressMe. Each card shows named swatches and opens the profile editor
+with its palette selected; Save preferences applies it to suggestions. Existing
+four-season profiles remain supported. Skin and hair descriptions are not used
+to automatically classify users. The linked reference uses some different names.
+
+`frontend/palettes.json` is the shared subtype and swatch catalog. After editing
+it or the backend styling rules, run `python3 scripts/build_styling_data.py` to
+refresh the generated offline demo data. Hex colors are illustrative approximations.

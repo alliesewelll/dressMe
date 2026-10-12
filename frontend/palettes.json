@@ -1,0 +1,330 @@
+[
+  {
+    "name": "Light Spring",
+    "family": "Spring",
+    "family_description": "Warm & Bright",
+    "description": "Light, delicate warmth",
+    "colors": [
+      {
+        "name": "soft peach",
+        "hex": "#f6bca7"
+      },
+      {
+        "name": "creamy apricot",
+        "hex": "#f7cca2"
+      },
+      {
+        "name": "warm white",
+        "hex": "#fff5e4"
+      }
+    ]
+  },
+  {
+    "name": "True Spring",
+    "family": "Spring",
+    "family_description": "Warm & Bright",
+    "description": "Golden warmth with lively color",
+    "colors": [
+      {
+        "name": "coral",
+        "hex": "#f57c70"
+      },
+      {
+        "name": "warm orange",
+        "hex": "#ef913d"
+      },
+      {
+        "name": "golden yellow",
+        "hex": "#edc64b"
+      }
+    ]
+  },
+  {
+    "name": "Bright Spring",
+    "family": "Spring",
+    "family_description": "Warm & Bright",
+    "description": "Vivid color and bold contrast",
+    "colors": [
+      {
+        "name": "bright orange",
+        "hex": "#ff812c"
+      },
+      {
+        "name": "emerald green",
+        "hex": "#16885b"
+      },
+      {
+        "name": "vivid red",
+        "hex": "#ee3544"
+      }
+    ]
+  },
+  {
+    "name": "Clear Spring",
+    "family": "Spring",
+    "family_description": "Warm & Bright",
+    "description": "Warm-clear color with winter-like clarity",
+    "colors": [
+      {
+        "name": "watermelon red",
+        "hex": "#ed536b"
+      },
+      {
+        "name": "bright coral",
+        "hex": "#ff7765"
+      },
+      {
+        "name": "clear green",
+        "hex": "#43b975"
+      }
+    ]
+  },
+  {
+    "name": "Light Summer",
+    "family": "Summer",
+    "family_description": "Cool & Muted",
+    "description": "Airy, delicate cool tones",
+    "colors": [
+      {
+        "name": "powder blue",
+        "hex": "#b4d3e7"
+      },
+      {
+        "name": "lilac",
+        "hex": "#c9b3dc"
+      },
+      {
+        "name": "dusty pink",
+        "hex": "#d9a7b5"
+      }
+    ]
+  },
+  {
+    "name": "True Summer",
+    "family": "Summer",
+    "family_description": "Cool & Muted",
+    "description": "Cool undertones with soft color",
+    "colors": [
+      {
+        "name": "soft raspberry",
+        "hex": "#b85c80"
+      },
+      {
+        "name": "periwinkle",
+        "hex": "#939ed3"
+      },
+      {
+        "name": "slate blue",
+        "hex": "#6e819e"
+      }
+    ]
+  },
+  {
+    "name": "Soft Summer",
+    "family": "Summer",
+    "family_description": "Cool & Muted",
+    "description": "Low chroma and a gentle blend",
+    "colors": [
+      {
+        "name": "dusty mauve",
+        "hex": "#b090a4"
+      },
+      {
+        "name": "sage green",
+        "hex": "#a2b29c"
+      },
+      {
+        "name": "cocoa rose",
+        "hex": "#9f787b"
+      }
+    ]
+  },
+  {
+    "name": "Deep Summer",
+    "family": "Summer",
+    "family_description": "Cool & Muted",
+    "description": "Cool color with added depth",
+    "colors": [
+      {
+        "name": "deep plum",
+        "hex": "#62405e"
+      },
+      {
+        "name": "slate gray",
+        "hex": "#6c7782"
+      },
+      {
+        "name": "dark raspberry",
+        "hex": "#913d60"
+      }
+    ]
+  },
+  {
+    "name": "Soft Autumn",
+    "family": "Autumn",
+    "family_description": "Warm & Muted/Rich",
+    "description": "Gentle, muted earth tones",
+    "colors": [
+      {
+        "name": "dusty olive",
+        "hex": "#93926a"
+      },
+      {
+        "name": "soft camel",
+        "hex": "#c3a17b"
+      },
+      {
+        "name": "dusty teal",
+        "hex": "#739997"
+      }
+    ]
+  },
+  {
+    "name": "True Autumn",
+    "family": "Autumn",
+    "family_description": "Warm & Muted/Rich",
+    "description": "Rich golden and earthy warmth",
+    "colors": [
+      {
+        "name": "rust red",
+        "hex": "#a74730"
+      },
+      {
+        "name": "olive green",
+        "hex": "#747b39"
+      },
+      {
+        "name": "caramel",
+        "hex": "#b87e42"
+      },
+      {
+        "name": "mustard yellow",
+        "hex": "#c7a02d"
+      }
+    ]
+  },
+  {
+    "name": "Deep Autumn",
+    "family": "Autumn",
+    "family_description": "Warm & Muted/Rich",
+    "description": "Grounded warmth and rich depth",
+    "colors": [
+      {
+        "name": "mahogany",
+        "hex": "#713c32"
+      },
+      {
+        "name": "dark espresso",
+        "hex": "#3d2923"
+      },
+      {
+        "name": "burnt orange",
+        "hex": "#bf602e"
+      }
+    ]
+  },
+  {
+    "name": "Light Autumn",
+    "family": "Autumn",
+    "family_description": "Warm & Muted/Rich",
+    "description": "Delicate, muted golden tones",
+    "colors": [
+      {
+        "name": "warm beige",
+        "hex": "#ddc4a5"
+      },
+      {
+        "name": "soft peach-brown",
+        "hex": "#c3977d"
+      },
+      {
+        "name": "muted camel",
+        "hex": "#baa07a"
+      }
+    ]
+  },
+  {
+    "name": "True Winter",
+    "family": "Winter",
+    "family_description": "Cool & Bright/Deep",
+    "description": "Cool clarity and striking contrast",
+    "colors": [
+      {
+        "name": "pure black",
+        "hex": "#151515"
+      },
+      {
+        "name": "pure white",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "sapphire blue",
+        "hex": "#2458b8"
+      },
+      {
+        "name": "true red",
+        "hex": "#dc2436"
+      }
+    ]
+  },
+  {
+    "name": "Bright Winter",
+    "family": "Winter",
+    "family_description": "Cool & Bright/Deep",
+    "description": "High intensity and jewel-like clarity",
+    "colors": [
+      {
+        "name": "royal blue",
+        "hex": "#3554d1"
+      },
+      {
+        "name": "magenta",
+        "hex": "#d12d8c"
+      },
+      {
+        "name": "vivid emerald",
+        "hex": "#008c65"
+      }
+    ]
+  },
+  {
+    "name": "Deep Winter",
+    "family": "Winter",
+    "family_description": "Cool & Bright/Deep",
+    "description": "Deep color and cool contrast",
+    "colors": [
+      {
+        "name": "deep navy",
+        "hex": "#202d49"
+      },
+      {
+        "name": "black-cherry",
+        "hex": "#492636"
+      },
+      {
+        "name": "charcoal",
+        "hex": "#393d44"
+      }
+    ]
+  },
+  {
+    "name": "Soft Winter",
+    "family": "Winter",
+    "family_description": "Cool & Bright/Deep",
+    "description": "Cool depth softened with gray",
+    "colors": [
+      {
+        "name": "charcoal rose",
+        "hex": "#805c6b"
+      },
+      {
+        "name": "cool taupe",
+        "hex": "#9a8e91"
+      },
+      {
+        "name": "deep slate",
+        "hex": "#4c6070"
+      }
+    ]
+  }
+]
