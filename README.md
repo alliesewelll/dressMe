@@ -213,3 +213,15 @@ The original image is displayed without recoloring, cropping, or background remo
 Image bytes stay in a browser object URL, are never uploaded or stored, and are
 released when replaced or removed. Refreshing clears the photo. Demo profile
 changes remain temporary; live mode saves only the selected profile fields.
+
+### Experimental photo detector
+
+The photo studio now includes a browser-local canvas sampler. Click a skin patch
+(or move the marker with arrow keys and press Enter) to get a three-palette
+shortlist. Median RGB pixels reduce isolated pixel noise; a yellow-to-red ratio
+estimates the sample's golden, rosy, or mixed cast. Very bright/dark samples are
+rejected. These hand-written rules are unvalidated, not a trained detector or
+professional season diagnosis; camera white balance can change the result.
+It does not detect faces, infer ethnicity, or assign seasons by skin depth. The
+shortlist covers broad starting palettes, not automatic classification into all
+16 subtypes. Compare a suggestion, then explicitly save it through the profile.
