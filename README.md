@@ -199,3 +199,17 @@ to automatically classify users. The linked reference uses some different names.
 `frontend/palettes.json` is the shared subtype and swatch catalog. After editing
 it or the backend styling rules, run `python3 scripts/build_styling_data.py` to
 refresh the generated offline demo data. Hex colors are illustrative approximations.
+
+## Photo color studio
+
+Open **Photo color studio** to select a local JPEG, PNG, or WebP portrait (up to
+10 MB / 40 megapixels). Two copies of the same image appear surrounded by colors
+from independently selected palettes. Select a swatch to compare colors, then
+**Use [palette]** to open the profile editor and save your choice.
+
+This is manual virtual draping, not automatic skin-tone detection or a ranked
+season prediction. Lighting, makeup, and screen settings can affect appearance.
+The original image is displayed without recoloring, cropping, or background removal.
+Image bytes stay in a browser object URL, are never uploaded or stored, and are
+released when replaced or removed. Refreshing clears the photo. Demo profile
+changes remain temporary; live mode saves only the selected profile fields.

@@ -160,7 +160,7 @@ class WardrobeTests(unittest.TestCase):
         response = self.client.get("/app/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Your wardrobe", response.text)
-        for asset in ["app.js", "style.css", "styling-data.js"]:
+        for asset in ["app.js", "style.css", "styling-data.js", "photo-studio.js"]:
             self.assertEqual(self.client.get(f"/app/{asset}").status_code, 200)
 
     def test_all_sixteen_color_palettes_round_trip(self):
