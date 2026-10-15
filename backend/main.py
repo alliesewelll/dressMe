@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, Response
+from fastapi import FastAPI, Depends, HTTPException, Query, Response, Request
+from starlette.concurrency import run_in_threadpool
+import ai_styling
 from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
@@ -23,6 +25,36 @@ def home():
 def require_user(user_id: int, db: Session):
     if db.get(models.User, user_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get('/ai/status')
+def ai_status():
+    return {'configured': ai_styling.configured(), 'provider': 'OpenAI'}
+
+
+@app.post('/users/{user_id}/ai-style-analysis')
+async def ai_style_analysis(user_id: int, request: Request, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    if request.headers.get('x-photo-consent') != 'yes':
+        raise HTTPException(400, 'Consent is required to send the photo and style context to OpenAI.')
+    if not ai_styling.configured():
+        raise HTTPException(503, 'Set OPENAI_API_KEY and STYLE_VISION_MODEL on the backend to enable AI analysis.')
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw) > 10 * 1024 * 1024:
+            raise HTTPException(413, 'Photo must be smaller than 10 MB.')
+    profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
+    wardrobe = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)
+                         .order_by(models.ClothingItem.item_id.desc()).limit(50)).all()
+    feedback = db.scalars(select(models.Feedback).where(models.Feedback.user_id == user_id)
+                         .order_by(models.Feedback.feedback_id.desc()).limit(20)).all()
+    context = {
+        'preferences': {k: getattr(profile, k) for k in ['color_season', 'undertone', 'body_type', 'preferred_styles']} if profile else {},
+        'wardrobe': [{k: getattr(item, k) for k in ['item_name', 'category', 'primary_color', 'times_worn']} for item in wardrobe],
+        'feedback': [{'rating': f.rating, 'reaction': f.feedback, 'purchased': f.purchased} for f in feedback],
+    }
+    return await run_in_threadpool(ai_styling.analyze_image, bytes(raw), context)
 
 
 @app.get("/users/{user_id}/style-profile", response_model=schemas.StyleProfileResponse)
