@@ -30,3 +30,14 @@ button.primary{font-size:12px}
 .pixel-sticker{position:absolute;pointer-events:none;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 #b2547a25)}.sticker-heart{width:47px;left:23px;top:78px;transform:rotate(-8deg)}.sticker-star{width:50px;right:23px;top:67px}.sticker-cursor{width:35px;right:61px;bottom:94px;transform:rotate(-9deg)}.digital-tag{position:absolute;left:19px;top:143px;font:8px 'Silkscreen',monospace;color:#953561;background:#fff8fde8;padding:7px;border:1px solid #e8a3c6;transform:rotate(-5deg)}.circle{padding:9px;display:grid;place-items:center}.circle img{width:23px;height:23px;image-rendering:pixelated}.feature-bottom{font-family:'Chakra Petch',sans-serif;font-weight:600}
 .card-art::after{content:'';position:absolute;right:10px;top:10px;width:18px;height:18px;background:url('assets/pixel-star.svg') center/contain no-repeat;opacity:.75;pointer-events:none}.profile .eyebrow::before{content:'';display:inline-block;width:17px;height:15px;background:url('assets/pixel-heart.svg') center/contain no-repeat;margin-right:7px;vertical-align:middle}
 @media(max-width:720px){header>span{font-size:7px}.stats small{font-size:7px}.sticker-heart{width:36px;top:62px}.sticker-star{width:38px;top:59px}.digital-tag{top:114px;font-size:7px}.sticker-cursor{width:28px;bottom:68px}.feature-top{font-size:10px}}
+/* Unified type hierarchy: Chakra Petch for the interface, Silkscreen for accents. */
+body,input,select,button{font-family:'Chakra Petch','Trebuchet MS',sans-serif}
+h1,h2,h3,h4,.card h3,.palette-card h4,.suggestion h3,dialog h2,.feature-bottom,.section-heading h2,.color-guide>h2,.ideas>h2{font-family:'Chakra Petch','Trebuchet MS',sans-serif}
+h1{font-weight:700;letter-spacing:-1.5px}h1 em{font-family:inherit;font-style:normal;font-weight:700;text-shadow:1px 2px white}
+h2,h3,h4{font-weight:600}.card h3{font-weight:600}.feature-bottom{font-style:normal}
+.logo{font-family:'Chakra Petch','Trebuchet MS',sans-serif;font-weight:700;letter-spacing:-2px}.logo span{font-family:inherit}
+#item-count,.palette-family h3 small,.stats strong{font-family:'Chakra Petch','Trebuchet MS',sans-serif}
+nav span{font-weight:600}.eyebrow,.side-label,header>span,.feature-top,.stats small,.wear-badge,.digital-tag{font-family:'Silkscreen','Courier New',monospace;font-weight:400}
+footer{font-family:'Chakra Petch','Trebuchet MS',sans-serif}
+.feature-bottom{font-style:italic}
+nav .nav-icon{width:25px;height:25px;flex:0 0 25px;filter:drop-shadow(1px 2px 0 #fff8);image-rendering:crisp-edges}nav a{gap:12px}nav a:hover .nav-icon{transform:rotate(-6deg)}@media(prefers-reduced-motion:reduce){nav a:hover .nav-icon{transform:none}}
