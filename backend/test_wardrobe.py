@@ -187,6 +187,30 @@ class WardrobeTests(unittest.TestCase):
         self.assertEqual(data["palettes"], PALETTES)
         self.assertEqual(suggest_items(" LIGHT-SPRING ")["palette"], PALETTES["light spring"])
 
+    def test_recommendation_feedback_round_trip(self):
+        response = self.client.post('/users/1/recommendations', json={
+            'recommendation': 'MAYBE', 'recommendation_reason': 'Try the color in daylight'})
+        self.assertEqual(response.status_code, 201)
+        rec = response.json()['recommendation_id']
+        path = f'/users/1/recommendations/{rec}/feedback'
+        self.assertEqual(self.client.get(path).status_code, 404)
+        first = self.client.put(path, json={'feedback':'LIKE','rating':5}).json()
+        second = self.client.put(path, json={'feedback':'DISLIKE','rating':2,'purchased':False}).json()
+        self.assertEqual(first['feedback_id'], second['feedback_id'])
+        self.assertEqual(self.client.get(path).json(), second)
+        self.assertEqual(self.client.get('/users/1/recommendations').json()[0]['recommendation_id'],rec)
+        self.assertEqual(self.client.get('/users/2/recommendations').json(), [])
+        self.assertEqual(self.client.put(f'/users/2/recommendations/{rec}/feedback',json={'feedback':'LIKE'}).status_code,404)
+        self.assertEqual(self.client.put(path,json={'feedback':'LIKE','rating':6}).status_code,422)
+        self.assertEqual(self.client.get(path).json(), second)
+        with SessionLocal() as db:
+            self.assertEqual(db.scalar(select(func.count()).select_from(Feedback)),1)
+
+    def test_recommendation_rejects_other_users_item(self):
+        item = self.client.post('/users/2/wardrobe',json={'item_name':'Shirt'}).json()
+        self.assertEqual(self.client.post('/users/1/recommendations',json={
+            'item_id':item['item_id'],'recommendation':'BUY','recommendation_reason':'Test'}).status_code,404)
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"

@@ -98,3 +98,36 @@ class ClothingItemResponse(ClothingItemCreate):
     item_id: int
     user_id: int
     created_at: datetime
+
+
+from typing import Literal
+
+
+class RecommendationCreate(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    item_id: int | None = Field(default=None, gt=0)
+    recommendation: Literal['BUY', 'MAYBE', 'SKIP']
+    recommendation_reason: str = Field(min_length=1, max_length=2000)
+
+
+class FeedbackSave(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    feedback: Literal['LIKE', 'DISLIKE', 'NEUTRAL']
+    rating: int | None = Field(default=None, ge=1, le=5)
+    purchased: bool | None = None
+    comments: str | None = Field(default=None, max_length=2000)
+
+
+class FeedbackResponse(FeedbackSave):
+    model_config = ConfigDict(from_attributes=True)
+    feedback_id: int
+    recommendation_id: int
+
+
+class RecommendationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    recommendation_id: int
+    item_id: int | None
+    recommendation: str
+    recommendation_reason: str | None
+    created_at: datetime

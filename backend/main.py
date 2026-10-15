@@ -204,3 +204,60 @@ def list_wardrobe(
         .offset(offset)
         .limit(limit)
     ).all()
+
+
+@app.post('/users/{user_id}/recommendations', response_model=schemas.RecommendationResponse, status_code=201)
+def save_recommendation(user_id: int, payload: schemas.RecommendationCreate, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    if payload.item_id is not None:
+        item = db.get(models.ClothingItem, payload.item_id)
+        if item is None or item.user_id != user_id:
+            raise HTTPException(404, 'Clothing item not found')
+    recommendation = models.Recommendation(user_id=user_id, **payload.model_dump())
+    db.add(recommendation)
+    db.commit()
+    db.refresh(recommendation)
+    return recommendation
+
+
+@app.get('/users/{user_id}/recommendations', response_model=list[schemas.RecommendationResponse])
+def list_recommendations(user_id: int, limit: int = Query(50, ge=1, le=100),
+                         offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    return db.scalars(select(models.Recommendation).where(models.Recommendation.user_id == user_id)
+                      .order_by(models.Recommendation.recommendation_id.desc()).offset(offset).limit(limit)).all()
+
+
+@app.put('/users/{user_id}/recommendations/{recommendation_id}/feedback', response_model=schemas.FeedbackResponse)
+def save_feedback(user_id: int, recommendation_id: int, payload: schemas.FeedbackSave, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    # Lock the parent so simultaneous first submissions cannot create duplicates in PostgreSQL.
+    recommendation = db.scalar(select(models.Recommendation).where(
+        models.Recommendation.recommendation_id == recommendation_id,
+        models.Recommendation.user_id == user_id).with_for_update())
+    if recommendation is None:
+        raise HTTPException(404, 'Recommendation not found')
+    feedback = db.scalar(select(models.Feedback).where(
+        models.Feedback.recommendation_id == recommendation_id, models.Feedback.user_id == user_id)
+        .order_by(models.Feedback.feedback_id.desc()).limit(1))
+    if feedback is None:
+        feedback = models.Feedback(user_id=user_id, recommendation_id=recommendation_id)
+        db.add(feedback)
+    for key, value in payload.model_dump().items():
+        setattr(feedback, key, value)
+    db.commit()
+    db.refresh(feedback)
+    return feedback
+
+
+@app.get('/users/{user_id}/recommendations/{recommendation_id}/feedback', response_model=schemas.FeedbackResponse)
+def get_feedback(user_id: int, recommendation_id: int, db: Session = Depends(get_db)):
+    require_user(user_id, db)
+    recommendation = db.get(models.Recommendation, recommendation_id)
+    if recommendation is None or recommendation.user_id != user_id:
+        raise HTTPException(404, 'Recommendation not found')
+    feedback = db.scalar(select(models.Feedback).where(models.Feedback.user_id == user_id,
+        models.Feedback.recommendation_id == recommendation_id).order_by(models.Feedback.feedback_id.desc()).limit(1))
+    if feedback is None:
+        raise HTTPException(404, 'No feedback yet')
+    return feedback
