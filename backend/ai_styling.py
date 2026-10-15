@@ -60,7 +60,7 @@ Do not claim to determine true undertone or a definitive season from a photo. Do
 Use body type only if the user explicitly supplied it. Do not assign seasons from skin depth.
 For no portrait, multiple people, or unusable lighting, return image_quality unusable and no palette candidates.
 Explain uncertainty and suggest a retake when needed. Use the wardrobe, preferences, and feedback as context for clothing ideas;
-do not invent owned items or claim the model was trained on this user's feedback. Output at most 5 observations, 3 palette candidates,
+do not invent owned items or claim the model was trained on this user's feedback. Use review comments, item colors, and categories to explain relevant preferences, but do not treat purchases as proof of liking an item. A null item means its details are unavailable; do not invent them. Output at most 5 observations, 3 palette candidates,
 5 clothing suggestions, and 5 limitations. All claims must be tentative. Never output numerical confidence scores.'''
     try:
         response = httpx.post('https://api.openai.com/v1/responses',

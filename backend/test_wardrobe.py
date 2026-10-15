@@ -211,6 +211,29 @@ class WardrobeTests(unittest.TestCase):
         self.assertEqual(self.client.post('/users/1/recommendations',json={
             'item_id':item['item_id'],'recommendation':'BUY','recommendation_reason':'Test'}).status_code,404)
 
+    def test_feedback_context_links_latest_review_to_item(self):
+        from recommendation_context import feedback_context
+        item = self.client.post('/users/1/wardrobe',json={
+            'item_name':'Blue shirt','category':'Tops','primary_color':'Blue'}).json()
+        rec = self.client.post('/users/1/recommendations',json={
+            'item_id':item['item_id'],'recommendation':'BUY','recommendation_reason':'Versatile color'}).json()
+        path = f"/users/1/recommendations/{rec['recommendation_id']}/feedback"
+        self.client.put(path,json={'feedback':'LIKE','rating':5,'comments':'Love the blue'})
+        with SessionLocal() as db:
+            db.add(Feedback(user_id=1,recommendation_id=rec['recommendation_id'],feedback='DISLIKE',rating=2,comments='Fit was uncomfortable'))
+            db.commit()
+            evidence = feedback_context(db,1)
+            self.assertEqual(len(evidence),1)
+            self.assertEqual(evidence[0]['item']['color'],'Blue')
+            self.assertEqual(evidence[0]['item']['category'],'Tops')
+            self.assertEqual(evidence[0]['reaction'],'DISLIKE')
+            self.assertEqual(evidence[0]['comments'],'Fit was uncomfortable')
+            self.assertEqual(feedback_context(db,2),[])
+        self.client.delete(f"/users/1/wardrobe/{item['item_id']}")
+        with SessionLocal() as db:
+            self.assertIsNone(feedback_context(db,1)[0]['item'])
+            self.assertEqual(feedback_context(db,1)[0]['reaction'],'DISLIKE')
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"

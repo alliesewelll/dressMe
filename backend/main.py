@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Query, Response, Request
 from starlette.concurrency import run_in_threadpool
 import ai_styling
+from recommendation_context import feedback_context
 from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
@@ -47,12 +48,10 @@ async def ai_style_analysis(user_id: int, request: Request, db: Session = Depend
     profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
     wardrobe = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)
                          .order_by(models.ClothingItem.item_id.desc()).limit(50)).all()
-    feedback = db.scalars(select(models.Feedback).where(models.Feedback.user_id == user_id)
-                         .order_by(models.Feedback.feedback_id.desc()).limit(20)).all()
     context = {
         'preferences': {k: getattr(profile, k) for k in ['color_season', 'undertone', 'body_type', 'preferred_styles']} if profile else {},
         'wardrobe': [{k: getattr(item, k) for k in ['item_name', 'category', 'primary_color', 'times_worn']} for item in wardrobe],
-        'feedback': [{'rating': f.rating, 'reaction': f.feedback, 'purchased': f.purchased} for f in feedback],
+        'feedback': feedback_context(db, user_id),
     }
     return await run_in_threadpool(ai_styling.analyze_image, bytes(raw), context)
 

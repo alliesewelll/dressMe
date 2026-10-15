@@ -287,3 +287,18 @@ Missing ratings and purchase responses are excluded from their denominators;
 legacy duplicate reviews use the highest feedback ID. Empty groups use null
 metrics. These are descriptive feedback metrics, not model accuracy or causal
 proof of improvement. This adds evaluation infrastructure, not automatic retraining.
+
+### Feedback-aware AI context
+
+AI analysis now links each review to its recommendation and clothing item,
+including category, color, brand, decision, explanation, and user comments.
+Only the newest review per recommendation is included (up to 20). Deleted or
+unavailable items have `item: null`; another user's items are never included.
+Comments and explanations are limited to 2,000 characters each. This context is
+sent to OpenAI only through the existing consented AI-analysis action.
+
+For example, a negative review saying “Fit was uncomfortable” on a blue shirt
+now reaches the model with its item details, rather than an unexplained negative
+rating. The model is instructed not to assume a purchase implies liking an item.
+This is context-based personalization, not model training; live output quality
+still needs evaluation with configured model access.
