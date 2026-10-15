@@ -2,6 +2,26 @@
 (() => {
  let portraitURL=null, generation=0;
  const canvas=document.querySelector('#skin-canvas'), ctx=canvas.getContext('2d',{willReadFrequently:true});
+ const aiButton=document.querySelector('#ai-analyze'), aiResult=document.querySelector('#ai-result');
+ document.querySelector('#ai-consent').onchange=()=>{aiButton.disabled=!source||!document.querySelector('#ai-consent').checked;};
+ aiButton.onclick=async()=>{
+  if(!source||!document.querySelector('#ai-consent').checked)return;
+  if(mode!=='live'){aiResult.textContent='Connect your wardrobe to the backend using the top-right wardrobe button first. AI is unavailable in the standalone demo.';return;}
+  const ticket=generation, selectedUser=user;
+  aiButton.disabled=true;aiResult.textContent='Analyzing photo and style context…';
+  try{
+   const clean=document.createElement('canvas');clean.width=canvas.width;clean.height=canvas.height;
+   const context=clean.getContext('2d');context.fillStyle='white';context.fillRect(0,0,clean.width,clean.height);context.drawImage(source,0,0,clean.width,clean.height);
+   const blob=await new Promise(resolve=>clean.toBlob(resolve,'image/jpeg',0.9));
+   const response=await fetch(`/users/${selectedUser}/ai-style-analysis`,{method:'POST',headers:{'Content-Type':'image/jpeg','X-Photo-Consent':'yes'},body:blob,signal:AbortSignal.timeout(70000)});
+   const result=await response.json();
+   if(ticket!==generation||user!==selectedUser||mode!=='live')return;
+   if(!response.ok)throw new Error(typeof result.detail==='string'?result.detail:'AI analysis failed.');
+   const a=result.analysis;
+   aiResult.innerHTML=`<h4>AI analysis · ${esc(result.model)}</h4><p>Photo quality: ${esc(a.image_quality)}</p><ul>${a.observations.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>${a.palette_candidates.map(c=>`<article><h4>${esc(c.palette)}</h4><p>${esc(c.reason)}</p><button class="quiet" data-ai-palette="${esc(c.palette)}">Try this AI suggestion</button></article>`).join('')}<h4>Clothing ideas</h4><ul>${a.clothing_suggestions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p>${a.limitations.map(esc).join(' ')}</p>`;
+  }catch(error){if(ticket===generation)aiResult.textContent=error.message;}finally{if(ticket===generation)aiButton.disabled=!source||!document.querySelector('#ai-consent').checked;}
+ };
+ aiResult.onclick=e=>{const b=e.target.closest('[data-ai-palette]');if(!b)return;document.querySelector('#edit-profile').click();document.querySelector('#profile-form').elements.color_season.value=b.dataset.aiPalette;};
  let source=null, point={x:0,y:0};
  function drawSample(){if(!source)return;ctx.drawImage(source,0,0,canvas.width,canvas.height);ctx.strokeStyle='white';ctx.lineWidth=3;ctx.strokeRect(point.x-10,point.y-10,20,20);ctx.strokeStyle='black';ctx.lineWidth=1;ctx.strokeRect(point.x-11,point.y-11,22,22);}
  function analyze(){
@@ -44,11 +64,11 @@
    if(ticket!==generation){URL.revokeObjectURL(candidate);return;}
    if(image.naturalWidth*image.naturalHeight>40000000)throw new Error('Image too large');
    if(portraitURL)URL.revokeObjectURL(portraitURL);portraitURL=candidate;
-   source=image;const scale=Math.min(1,700/image.naturalWidth,700/image.naturalHeight);canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));point={x:canvas.width/2,y:canvas.height/2};drawSample();document.querySelector('#detector').hidden=false;document.querySelector('#detector-result').textContent='Select a skin area to get an estimate.';
+   aiResult.textContent='';document.querySelector('#ai-consent').checked=false;aiButton.disabled=true;source=image;const scale=Math.min(1,700/image.naturalWidth,700/image.naturalHeight);canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));point={x:canvas.width/2,y:canvas.height/2};drawSample();document.querySelector('#detector').hidden=false;document.querySelector('#detector-result').textContent='Select a skin area to get an estimate.';
    document.querySelector('#remove-photo').disabled=false;renderStudio();status.textContent='Compare the same photo in both frames. Tap a swatch to try each color, then choose a palette.';
   }catch{URL.revokeObjectURL(candidate);if(ticket===generation)status.textContent='Could not open this image. Try a smaller JPEG, PNG, or WebP (under 40 megapixels).';}
   event.target.value='';
  });
- document.querySelector('#remove-photo').addEventListener('click',()=>{generation++;if(portraitURL)URL.revokeObjectURL(portraitURL);portraitURL=null;source=null;ctx.clearRect(0,0,canvas.width,canvas.height);document.querySelector('#detector').hidden=true;document.querySelector('#detector-result').textContent='';document.querySelector('#portrait-file').value='';document.querySelector('#remove-photo').disabled=true;status.textContent='Photo removed from this tab.';renderStudio();});
+ document.querySelector('#remove-photo').addEventListener('click',()=>{generation++;if(portraitURL)URL.revokeObjectURL(portraitURL);portraitURL=null;source=null;aiResult.textContent='';document.querySelector('#ai-consent').checked=false;aiButton.disabled=true;ctx.clearRect(0,0,canvas.width,canvas.height);document.querySelector('#detector').hidden=true;document.querySelector('#detector-result').textContent='';document.querySelector('#portrait-file').value='';document.querySelector('#remove-photo').disabled=true;status.textContent='Photo removed from this tab.';renderStudio();});
  renderStudio();
 })();

@@ -225,3 +225,36 @@ professional season diagnosis; camera white balance can change the result.
 It does not detect faces, infer ethnicity, or assign seasons by skin depth. The
 shortlist covers broad starting palettes, not automatic classification into all
 16 subtypes. Compare a suggestion, then explicitly save it through the profile.
+
+## AI vision pipeline (new)
+
+The photo studio now offers **Analyze with AI**, separate from the optional local
+pixel experiment. It calls `POST /users/{user_id}/ai-style-analysis` with an image
+body and `X-Photo-Consent: yes`. The backend validates the image, corrects EXIF
+orientation, resizes to at most 1024px, strips metadata, and invokes the OpenAI
+Responses API with a strict output schema. The model receives saved style
+preferences, the newest 50 wardrobe items, and up to 20 recent feedback records.
+No email, password, or username is sent. Results include photo-quality notes,
+up to three palette candidates, clothing ideas, limitations, and the model name.
+
+To enable it, set `OPENAI_API_KEY` and `STYLE_VISION_MODEL` in the root `.env`.
+Choose a model available to your API account that supports image input and
+Responses structured outputs. Restart FastAPI, visit `/app/`, connect an existing
+user, select a portrait, and check the consent box before analyzing. API usage
+may incur charges. `/ai/status` reports whether configuration is present.
+Never place the key in frontend JavaScript. This remains a local prototype with
+no authentication or per-user quotas; do not expose the endpoint publicly yet.
+
+Local draping never sends the image. **Analyze with AI does send the resized
+photo and style context to OpenAI**. The app does not persist photos or model
+responses; `store: false` is passed to the provider, which does not itself imply
+zero provider retention. Saving a suggested palette is a separate user action.
+
+The adapter is tested with mocked provider responses, not a live paid model run.
+It is an integration with a pretrained model, not a custom-trained color-analysis
+model. Do not claim validated accuracy or automatic learning from feedback.
+
+Next platform milestones: store analysis/feedback evaluation records, add a
+Pandas evaluation notebook, introduce OpenCV image-quality features where useful,
+and migrate the current vanilla-JavaScript UI to React. React, OpenCV, and a
+trained recommendation model are not implemented in this increment.
