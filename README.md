@@ -258,3 +258,32 @@ Next platform milestones: store analysis/feedback evaluation records, add a
 Pandas evaluation notebook, introduce OpenCV image-quality features where useful,
 and migrate the current vanilla-JavaScript UI to React. React, OpenCV, and a
 trained recommendation model are not implemented in this increment.
+
+## Recommendation feedback and evaluation
+
+- `POST /users/{id}/recommendations`: record an explicit BUY/MAYBE/SKIP decision
+  with a required explanation and optional owned `item_id`.
+- `GET /users/{id}/recommendations`: list saved decisions with limit/offset pagination.
+- `PUT /users/{id}/recommendations/{rec_id}/feedback`: save or replace the latest
+  reaction, optional rating (1–5), purchase outcome, and notes. Omitted optional
+  fields are cleared. Repeat reviews update one response rather than adding votes.
+- `GET /users/{id}/recommendations/{rec_id}/feedback`: retrieve the latest response.
+
+The frontend's **Was it a good recommendation?** section loads the latest 50
+saved recommendations for a connected user and lets them review and revise
+feedback. Demo suggestions and AI photo-analysis results are not automatically
+converted to BUY/MAYBE/SKIP records. Use seeded recommendations or explicitly
+record a decision through `/docs` first. Authentication remains pending.
+
+Run the read-only Pandas report from the project root:
+
+```sh
+.venv/bin/python analysis/evaluate_recommendations.py --user-id 1
+.venv/bin/python -m unittest discover -s analysis -p 'test_*.py'
+```
+
+It reports feedback coverage, like rate, purchase rate, and mean rating by decision.
+Missing ratings and purchase responses are excluded from their denominators;
+legacy duplicate reviews use the highest feedback ID. Empty groups use null
+metrics. These are descriptive feedback metrics, not model accuracy or causal
+proof of improvement. This adds evaluation infrastructure, not automatic retraining.
