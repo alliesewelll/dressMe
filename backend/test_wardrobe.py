@@ -234,6 +234,30 @@ class WardrobeTests(unittest.TestCase):
             self.assertIsNone(feedback_context(db,1)[0]['item'])
             self.assertEqual(feedback_context(db,1)[0]['reaction'],'DISLIKE')
 
+    def test_evaluation_summary_tracks_feedback_and_unknowns(self):
+        path = '/users/1/recommendation-evaluation'
+        self.assertEqual(self.client.get(path).json(), {'user_id':1,'metrics':[]})
+        self.assertEqual(self.client.get('/users/999/recommendation-evaluation').status_code,404)
+        ids=[]
+        for _ in range(3):
+            ids.append(self.client.post('/users/1/recommendations',json={
+                'recommendation':'BUY','recommendation_reason':'Test suggestion'}).json()['recommendation_id'])
+        self.client.put(f'/users/1/recommendations/{ids[0]}/feedback',json={'feedback':'LIKE','rating':5,'purchased':True})
+        self.client.put(f'/users/1/recommendations/{ids[1]}/feedback',json={'feedback':'NEUTRAL'})
+        metric=self.client.get(path).json()['metrics'][0]
+        self.assertEqual(metric['recommendation_count'],3)
+        self.assertEqual(metric['feedback_count'],2)
+        self.assertEqual(metric['like_rate'],0.5)
+        self.assertEqual(metric['purchase_response_count'],1)
+        self.assertEqual(metric['purchase_rate'],1)
+        self.assertEqual(metric['average_rating'],5)
+        self.assertEqual(self.client.get('/users/2/recommendation-evaluation').json()['metrics'],[])
+        self.client.put(f'/users/1/recommendations/{ids[0]}/feedback',json={'feedback':'DISLIKE','rating':2,'purchased':False})
+        metric=self.client.get(path).json()['metrics'][0]
+        self.assertEqual(metric['feedback_count'],2)
+        self.assertEqual(metric['purchase_rate'],0)
+        self.assertEqual(metric['average_rating'],2)
+
     def test_saved_item_and_user_isolation(self):
         response = self.client.post("/users/1/wardrobe", json={
             "item_name": "  Blue shirt  ", "primary_color": "Blue", "purchase_price": "29.95"

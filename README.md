@@ -302,3 +302,14 @@ now reaches the model with its item details, rather than an unexplained negative
 rating. The model is instructed not to assume a purchase implies liking an item.
 This is context-based personalization, not model training; live output quality
 still needs evaluation with configured model access.
+
+### Evaluation API
+
+`GET /users/{user_id}/recommendation-evaluation` returns the same Pandas metrics
+as the CLI, grouped by BUY/MAYBE/SKIP. The API and CLI now share
+`backend/evaluation.py` so their definitions stay consistent. It includes all
+saved recommendations for the user, regardless of list pagination. Rates are
+fractions from 0 to 1; missing outcomes yield null instead of a misleading zero.
+An empty history returns `metrics: []`; a missing user returns 404.
+Try it in `/docs`. These statistics describe recorded feedback, not predictive
+accuracy. PostgreSQL integration is still unverified; tests use SQLite.

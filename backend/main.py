@@ -260,3 +260,21 @@ def get_feedback(user_id: int, recommendation_id: int, db: Session = Depends(get
     if feedback is None:
         raise HTTPException(404, 'No feedback yet')
     return feedback
+
+
+@app.get('/users/{user_id}/recommendation-evaluation', response_model=schemas.EvaluationResponse)
+def recommendation_evaluation(user_id: int, db: Session = Depends(get_db)):
+    import pandas as pd
+    from evaluation import summarize
+    require_user(user_id, db)
+    rows = db.execute(select(
+        models.Recommendation.recommendation_id, models.Recommendation.recommendation,
+        models.Feedback.feedback_id, models.Feedback.feedback, models.Feedback.rating,
+        models.Feedback.purchased,
+    ).outerjoin(models.Feedback, (
+        (models.Feedback.recommendation_id == models.Recommendation.recommendation_id)
+        & (models.Feedback.user_id == models.Recommendation.user_id)
+    )).where(models.Recommendation.user_id == user_id)).mappings().all()
+    frame = pd.DataFrame(rows, columns=['recommendation_id', 'recommendation',
+                                       'feedback_id', 'feedback', 'rating', 'purchased'])
+    return {'user_id': user_id, 'metrics': summarize(frame)}

@@ -131,3 +131,20 @@ class RecommendationResponse(BaseModel):
     recommendation: str
     recommendation_reason: str | None
     created_at: datetime
+
+
+class RecommendationMetrics(BaseModel):
+    recommendation: str
+    recommendation_count: int
+    feedback_count: int
+    feedback_coverage: float
+    like_rate: float | None
+    purchase_response_count: int
+    purchase_rate: float | None
+    rating_count: int
+    average_rating: float | None
+
+
+class EvaluationResponse(BaseModel):
+    user_id: int
+    metrics: list[RecommendationMetrics]
