@@ -313,3 +313,9 @@ fractions from 0 to 1; missing outcomes yield null instead of a misleading zero.
 An empty history returns `metrics: []`; a missing user returns 404.
 Try it in `/docs`. These statistics describe recorded feedback, not predictive
 accuracy. PostgreSQL integration is still unverified; tests use SQLite.
+
+The frontend feedback section includes **Your recommendation report**. In live
+mode, select **Refresh report** to see coverage, likes, purchase outcomes, and
+average ratings grouped by recommendation. Saving feedback refreshes the report.
+Missing purchase or rating answers remain unknown; demo activity is excluded.
+Run `node frontend/test-evaluation.cjs` to check report formatting.

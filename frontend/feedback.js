@@ -24,6 +24,6 @@
  panel.addEventListener('submit',async e=>{e.preventDefault();const form=e.target;
   if(mode!=='live'||user!==Number(form.dataset.user)){status.textContent='Your selected user changed. Reload recommendations.';panel.innerHTML='';return;}
   const b=form.querySelector('button'), output=form.querySelector('.feedback-result');b.disabled=true;
-  try{const values=Object.fromEntries(new FormData(form));await api(`recommendations/${form.dataset.rec}/feedback`,'PUT',{feedback:values.feedback,rating:values.rating?Number(values.rating):null,purchased:values.purchased===''?null:values.purchased==='true',comments:values.comments||null});output.textContent='Feedback saved. Thank you!';}catch(error){output.textContent=error.message;}finally{b.disabled=false;}
+  try{const values=Object.fromEntries(new FormData(form));await api(`recommendations/${form.dataset.rec}/feedback`,'PUT',{feedback:values.feedback,rating:values.rating?Number(values.rating):null,purchased:values.purchased===''?null:values.purchased==='true',comments:values.comments||null});output.textContent='Feedback saved. Thank you!';window.dispatchEvent(new Event('feedback-saved'));}catch(error){output.textContent=error.message;}finally{b.disabled=false;}
  });
 })();

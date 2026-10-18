@@ -34,6 +34,7 @@ async function loadLive(){
  items=all;profile=p;suggestions=s;mode='live';render();
 }
 function render(){
+ window.dispatchEvent(new CustomEvent("wardrobe-context",{detail:{mode,user}}));
  $('#connection').textContent=mode==='demo'?'Demo wardrobe ↗':`User ${user} · Live wardrobe ↗`;
  $('#mode-note').textContent=mode==='demo'?'✧ Demo mode · Explore a sample closet. Changes last until you refresh.':'✧ Connected to your local backend · Changes are saved to your wardrobe.';
  $('#count').textContent=items.length;$('#wears').textContent=items.reduce((s,x)=>s+x.times_worn,0);$('#unworn').textContent=items.filter(x=>!x.times_worn).length;
