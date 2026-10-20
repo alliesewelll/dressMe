@@ -3,9 +3,16 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const colors = {camel:'#ba9870',cream:'#e4dfce',ivory:'#eee8d9',olive:'#7a8264',indigo:'#59667b',terracotta:'#b97158',black:'#40433f',blue:'#8199ac',white:'#e7e7df',navy:'#444f65',teal:'#618b89','soft white':'#ede9df',peach:'#e8b197',coral:'#d98873','warm green':'#91a17e','dusty rose':'#c8999e',lavender:'#b3a5c6','soft blue':'#9baec7',cobalt:'#4d6cab',emerald:'#4a7f66',berry:'#91526c',brown:'#917258',pink:'#d4a5a7'};
 for (const entry of stylingData.catalog) for (const color of entry.colors) colors[color.name]=color.hex;
 function art(category,color){
- const fill=colors[String(color).toLowerCase()]||'#9b9f8b';
+ const fill=colors[String(color).toLowerCase()]||'#ef9ab9';
  const paths = category==='Bottoms' ? '<path d="M68 30h105l-8 160h-45l-1-102-12 102H60z"/><path d="M69 45h102M118 30v58" fill="none"/>' : category==='Dresses' ? '<path d="M92 25h55l10 55 32 111H48L80 80z"/><path d="M94 25q26 32 51 0M80 80h77" fill="none"/>' : category==='Outerwear' ? '<path d="M79 29l40 10 40-10 38 40-21 27-17-20 10 117H68L79 76 59 96 39 69z"/><path d="M79 29l40 10-21 40-19-22m80-28-40 10 20 40 20-22M119 40v153M81 125h26m24 0h25" fill="none"/>' : '<path d="M81 35l38 12 38-12 40 36-26 29-18-17 8 106H76l7-106-18 17-26-29z"/><path d="M91 39q28 37 56 0M81 174h74" fill="none"/>';
- return `<svg viewBox="0 0 240 220" role="img" aria-label="${esc(category)} illustration"><g fill="${fill}" stroke="#343a302e" stroke-width="2" stroke-linejoin="round">${paths}</g></svg>`;
+ return `<svg class="clothing-sticker" viewBox="0 0 240 220" role="img" aria-label="${esc(category || 'Clothing')} placeholder illustration">
+ <g aria-hidden="true" fill="#ffacd0"><path d="M32 29h6v6h6v6h-6v6h-6v-6h-6v-6h6zM198 153h5v5h5v5h-5v5h-5v-5h-5v-5h5z"/><path d="M187 30h5v5h5v5h-5v5h-5v-5h-5v-5h5z" fill="#fff" stroke="#cc4c85" stroke-width="1.5"/></g>
+ <g transform="translate(3 5)" fill="#bc4f8160" stroke="#bc4f8160" stroke-width="11" stroke-linejoin="round">${paths}</g>
+ <g fill="${fill}" stroke="#fff9fc" stroke-width="12" stroke-linejoin="round">${paths}</g>
+ <g fill="${fill}" stroke="#873953" stroke-width="2.5" stroke-linejoin="round">${paths}</g>
+ <path d="M91 96l-3 57" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5" stroke-linecap="square"/>
+ <g transform="translate(139 100)" fill="#ff9bc5" stroke="#873953" stroke-width="2" stroke-linejoin="round"><path d="M0 0l-15-8v16L0 2l15 6V-8L0 0M-2 3l-6 14m10-14 6 14"/><path d="M-3-3h6v7h-6z" fill="#fff0f7"/></g>
+ </svg>`;
 }
 const initialItems = [
  ['Camel wool coat','Outerwear','Camel','Everlane',18],['Ivory silk blouse','Tops','Ivory','Quince',12],['Straight-leg denim','Bottoms','Indigo','Madewell',27],['Olive linen shirt','Tops','Olive','Uniqlo',8],['Everyday knit','Tops','Cream','COS',0],['Terracotta midi dress','Dresses','Terracotta','Sézane',3]
