@@ -319,3 +319,16 @@ mode, select **Refresh report** to see coverage, likes, purchase outcomes, and
 average ratings grouped by recommendation. Saving feedback refreshes the report.
 Missing purchase or rating answers remain unknown; demo activity is excluded.
 Run `node frontend/test-evaluation.cjs` to check report formatting.
+
+### Ranked wardrobe suggestions
+
+`GET /users/{user_id}/wardrobe-ranking?limit=10` ranks the user's own clothes
+against saved preferences and returns item IDs, names, scores, and explanations.
+This deterministic baseline awards two points for an exact normalized palette
+color match and one point for a saved style phrase found in item metadata.
+Separate style phrases with commas, semicolons, or newlines. Scores range from
+0–3 and are not probabilities. Ties use ascending item ID. Missing or unrecognized
+preferences do not create guessed matches; an empty wardrobe returns an empty list.
+The limit accepts 1–50. Color synonyms and visual similarity are not yet supported.
+This endpoint does not call AI, modify data, or automatically log BUY decisions.
+It is ready for frontend integration; feedback learning remains a separate next step.

@@ -148,3 +148,16 @@ class RecommendationMetrics(BaseModel):
 class EvaluationResponse(BaseModel):
     user_id: int
     metrics: list[RecommendationMetrics]
+
+
+class RankedWardrobeItem(BaseModel):
+    item_id: int
+    item_name: str
+    score: int = Field(ge=0, le=3)
+    reasons: list[str]
+
+
+class WardrobeRankingResponse(BaseModel):
+    user_id: int
+    method: str = 'palette-keywords-v1'
+    items: list[RankedWardrobeItem]

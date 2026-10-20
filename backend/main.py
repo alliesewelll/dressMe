@@ -278,3 +278,13 @@ def recommendation_evaluation(user_id: int, db: Session = Depends(get_db)):
     frame = pd.DataFrame(rows, columns=['recommendation_id', 'recommendation',
                                        'feedback_id', 'feedback', 'rating', 'purchased'])
     return {'user_id': user_id, 'metrics': summarize(frame)}
+
+
+@app.get('/users/{user_id}/wardrobe-ranking', response_model=schemas.WardrobeRankingResponse)
+def wardrobe_ranking(user_id: int, limit: int = Query(10, ge=1, le=50),
+                     db: Session = Depends(get_db)):
+    from wardrobe_ranking import rank_wardrobe
+    require_user(user_id, db)
+    profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
+    items = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)).all()
+    return {'user_id': user_id, 'items': rank_wardrobe(items, profile, limit)}
