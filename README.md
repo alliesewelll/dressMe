@@ -331,4 +331,8 @@ Separate style phrases with commas, semicolons, or newlines. Scores range from
 preferences do not create guessed matches; an empty wardrobe returns an empty list.
 The limit accepts 1–50. Color synonyms and visual similarity are not yet supported.
 This endpoint does not call AI, modify data, or automatically log BUY decisions.
-It is ready for frontend integration; feedback learning remains a separate next step.
+In the frontend inspiration section, **Already in your closet → Find my matches**
+loads the top five owned pieces in live mode, with explanations and matching points.
+Changing the wardrobe or preferences clears outdated results. Demo mode prompts
+users to connect their wardrobe. Feedback learning remains a separate next step.
+Run `node frontend/test-wardrobe-ranking.cjs` for frontend state checks.

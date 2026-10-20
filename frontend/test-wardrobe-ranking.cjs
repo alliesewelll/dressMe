@@ -1,0 +1,24 @@
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+const fs = require('node:fs');
+const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches'].map(id=>[id, {}]));
+const events = {};
+let resolve;
+const context = vm.createContext({document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:()=>new Promise(r=>resolve=r),esc:s=>s.replaceAll('<','&lt;')});
+vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context);
+(async()=>{
+ const button=nodes['#load-wardrobe-matches'], results=nodes['#wardrobe-matches'], status=nodes['#wardrobe-match-status'];
+ assert.equal(button.disabled,true);
+ context.mode='live';events['wardrobe-context']();
+ let request=button.onclick();
+ resolve({items:[{item_name:'<Top>',score:2,reasons:['Palette match']}]});await request;
+ assert.match(results.innerHTML,/&lt;Top>/);
+ assert.match(results.innerHTML,/2 \/ 3/);
+ request=button.onclick();events['wardrobe-context']();resolve({items:[{item_name:'Stale',score:0,reasons:[]}]});await request;
+ assert.equal(results.innerHTML,'');
+ request=button.onclick();resolve({items:[]});await request;
+ assert.match(status.textContent,/Add a piece/);
+ context.api=async()=>{throw new Error('Offline')};await button.onclick();
+ assert.match(status.textContent,/Try again/);assert.equal(button.disabled,false);
+ console.log('Wardrobe match rendering, empty/error, demo, and stale-response checks passed.');
+})().catch(error=>{console.error(error);process.exitCode=1});
