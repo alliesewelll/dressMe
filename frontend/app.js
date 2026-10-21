@@ -48,6 +48,7 @@ function render(){
  $('#item-count').textContent=`${items.length} pieces`;
  renderGrid();
  $('#profile-copy').innerHTML=profile.color_season||profile.undertone||profile.body_type?`<p>${[profile.color_season&&profile.color_season+' palette',profile.undertone&&profile.undertone+' undertone',profile.body_type].filter(Boolean).map(esc).join(' · ')}</p>`:'<p>Set your preferences to find your starting palette.</p>';
+ if(profile.preferred_styles) $('#profile-copy').innerHTML+=`<p>Your style: ${esc(profile.preferred_styles)}</p>`;
  $('#swatches').innerHTML=(suggestions.palette||[]).map(c=>`<div class="swatch" style="background:${colors[c]||'#a4a88e'}" title="${esc(c)}" role="img" aria-label="${esc(c)}"></div>`).join('');
  $('#suggestions').innerHTML=(suggestions.suggestions||[]).map(s=>`<article class="suggestion"><h3>${esc(s.item_name)} ↗</h3><p>${esc(s.reason)}</p><small>TRY IT IN ${(s.suggested_colors||[]).map(esc).join(' · ')}</small></article>`).join('')||'<p>Add a style profile to see color and silhouette ideas.</p>';
 }
@@ -59,13 +60,13 @@ $('#hero-art').innerHTML=art('Outerwear','Cream');
 $('#search').addEventListener('input',renderGrid);
 $('.filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.classList.toggle('selected',x===b));renderGrid()});
 $('#add').onclick=()=>show('#item-dialog');$('#connection').onclick=()=>show('#connect-dialog');
-$('#edit-profile').onclick=()=>{const f=$('#profile-form');for(const key of ['color_season','undertone','body_type']){const v=profile[key]||'';f.elements[key].value=[...f.elements[key].options].find(o=>o.value.toLowerCase()===v.toLowerCase())?.value||'';}show('#profile-dialog')};
+$('#edit-profile').onclick=()=>{const f=$('#profile-form');for(const key of ['color_season','undertone','body_type']){const v=profile[key]||'';f.elements[key].value=[...f.elements[key].options].find(o=>o.value.toLowerCase()===v.toLowerCase())?.value||'';}f.elements.preferred_styles.value=profile.preferred_styles||'';show('#profile-dialog')};
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
 $('#demo').onclick=()=>{demo();$('#connect-dialog').close();$('#message').textContent='Sample wardrobe loaded.'};
 async function submit(form,fn){const b=form.querySelector('[type=submit]');b.disabled=true;form.querySelector('.form-error').textContent='';try{await fn();form.closest('dialog').close()}catch(e){form.querySelector('.form-error').textContent=e.message}finally{b.disabled=false}}
 $('#connect-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const oldUser=user;user=Number(e.target.elements.user.value);try{await loadLive();$('#message').textContent='Your wardrobe is connected.'}catch(error){user=oldUser;throw error}})};
 $('#item-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k].trim()||null;if(!body.item_name)throw new Error('Please give your piece a name.');if(mode==='demo')items.unshift({...body,item_id:Math.max(0,...items.map(i=>i.item_id))+1,times_worn:0});else items.unshift(await api('wardrobe','POST',body));render();e.target.reset();$('#message').textContent='Your new piece is in the wardrobe.'})};
-$('#profile-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k]||null;if(mode==='demo'){profile=body;suggestions=demoSuggestions()}else{profile=await api('style-profile','PATCH',body);suggestions=await api('style-suggestions')}render();$('#message').textContent='Style preferences updated.'})};
+$('#profile-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k].trim()||null;if(mode==='demo'){profile=body;suggestions=demoSuggestions()}else{profile=await api('style-profile','PATCH',body);suggestions=await api('style-suggestions')}render();$('#message').textContent='Style preferences updated.'})};
 $('#grid').onclick=async e=>{const b=e.target.closest('[data-wear]');if(!b)return;b.disabled=true;try{const id=Number(b.dataset.wear),i=items.find(x=>x.item_id===id);if(mode==='demo')i.times_worn++;else Object.assign(i,await api(`wardrobe/${id}/wear`,'POST'));render();$('#message').textContent=`One more wear for ${i.item_name}.`}catch(error){$('#message').textContent=error.message;b.disabled=false}};
 initColorGuide();
 demo();
