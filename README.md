@@ -325,11 +325,15 @@ Run `node frontend/test-evaluation.cjs` to check report formatting.
 `GET /users/{user_id}/wardrobe-ranking?limit=10` ranks the user's own clothes
 against saved preferences and returns item IDs, names, scores, and explanations.
 This deterministic baseline awards two points for an exact normalized palette
-color match and one point for a saved style phrase found in item metadata.
+color match, one point for a curated related shade (instead of the exact-match
+points), and one point for a saved style phrase found in item metadata.
 Separate style phrases with commas, semicolons, or newlines. Scores range from
 0–3 and are not probabilities. Ties use ascending item ID. Missing or unrecognized
 preferences do not create guessed matches; an empty wardrobe returns an empty list.
-The limit accepts 1–50. Color synonyms and visual similarity are not yet supported.
+The limit accepts 1–50. Related names include cream/ivory/off-white/warm white, olive/olive green,
+terracotta/terra cotta/burnt orange, and cobalt/cobalt blue. Related matches are
+explicitly labeled and score below exact matches. Broad colors are not expanded;
+visual similarity is not measured. The method identifier is `palette-keywords-v2`.
 This endpoint does not call AI, modify data, or automatically log BUY decisions.
 In the frontend inspiration section, **Already in your closet → Find my matches**
 loads the top five owned pieces in live mode, with explanations and matching points.

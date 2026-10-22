@@ -159,5 +159,5 @@ class RankedWardrobeItem(BaseModel):
 
 class WardrobeRankingResponse(BaseModel):
     user_id: int
-    method: str = 'palette-keywords-v1'
+    method: str = 'palette-keywords-v2'
     items: list[RankedWardrobeItem]

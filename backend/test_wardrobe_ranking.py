@@ -26,3 +26,24 @@ class RankingTests(unittest.TestCase):
         self.assertEqual(self.client.get('/users/1/wardrobe-ranking').json()['items'][0]['score'], 0)
         self.assertEqual(self.client.get('/users/999/wardrobe-ranking').status_code, 404)
         self.assertEqual(self.client.get('/users/1/wardrobe-ranking?limit=0').status_code, 422)
+
+    def test_related_colors_score_below_exact_matches(self):
+        self.client.patch('/users/1/style-profile', json={'undertone': 'warm'})
+        for color in [' OFF-WHITE ', 'cream', 'white', 'blue', None, 'ivory']:
+            self.client.post('/users/1/wardrobe', json={'item_name': str(color), 'primary_color': color})
+        response = self.client.get('/users/1/wardrobe-ranking').json()
+        self.assertEqual(response['method'], 'palette-keywords-v2')
+        rows = response['items']
+        self.assertEqual([row['score'] for row in rows], [2, 1, 1, 0, 0, 0])
+        self.assertEqual(rows[0]['item_name'], 'cream')
+        self.assertIn('related shade of cream', rows[1]['reasons'][0])
+        self.assertIn('exactly matches', rows[0]['reasons'][0])
+
+    def test_related_colors_require_recognized_preferences(self):
+        self.client.post('/users/1/wardrobe', json={'item_name': 'Ivory top', 'primary_color': 'ivory'})
+        self.client.patch('/users/1/style-profile', json={'color_season': 'unknown'})
+        self.assertEqual(self.client.get('/users/1/wardrobe-ranking').json()['items'][0]['score'], 0)
+        self.client.patch('/users/1/style-profile', json={'color_season': 'Light Spring'})
+        result = self.client.get('/users/1/wardrobe-ranking').json()['items'][0]
+        self.assertEqual(result['score'], 1)
+        self.assertIn('warm white', result['reasons'][0])
