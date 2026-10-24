@@ -161,3 +161,20 @@ class WardrobeRankingResponse(BaseModel):
     user_id: int
     method: str = 'palette-keywords-v2'
     items: list[RankedWardrobeItem]
+
+
+class FeedbackFeatureMetric(BaseModel):
+    feature: str
+    value: str
+    decision: str
+    review_count: int
+    like_rate: float
+    rating_count: int
+    average_rating: float | None
+
+
+class FeedbackFeaturesResponse(BaseModel):
+    user_id: int
+    reviewed_recommendations: int
+    window_limit: int = 100
+    metrics: list[FeedbackFeatureMetric]

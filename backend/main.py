@@ -288,3 +288,12 @@ def wardrobe_ranking(user_id: int, limit: int = Query(10, ge=1, le=50),
     profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
     items = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)).all()
     return {'user_id': user_id, 'items': rank_wardrobe(items, profile, limit)}
+
+
+@app.get('/users/{user_id}/feedback-features', response_model=schemas.FeedbackFeaturesResponse)
+def feedback_features(user_id: int, db: Session = Depends(get_db)):
+    from feedback_features import summarize_features
+    require_user(user_id, db)
+    reviews = feedback_context(db, user_id, limit=100)
+    return {'user_id': user_id, 'reviewed_recommendations': len(reviews),
+            'metrics': summarize_features(reviews)}

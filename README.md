@@ -340,3 +340,17 @@ loads the top five owned pieces in live mode, with explanations and matching poi
 Changing the wardrobe or preferences clears outdated results. Demo mode prompts
 users to connect their wardrobe. Feedback learning remains a separate next step.
 Run `node frontend/test-wardrobe-ranking.cjs` for frontend state checks.
+
+### Feedback feature summary
+
+`GET /users/{user_id}/feedback-features` uses Pandas to summarize feedback by
+normalized wardrobe color and category, separately for BUY, MAYBE, and SKIP.
+It reports review counts, like rates, rating counts, and average ratings from
+the latest review for each of the 100 most recently reviewed recommendations.
+`reviewed_recommendations` includes reviews with missing/deleted items, which
+cannot contribute feature groups. Missing ratings remain unknown. Item features
+reflect the current wardrobe metadata, not a historical snapshot.
+A liked SKIP decision is kept separate from liked BUY advice: these metrics
+measure reactions to recommendations, not direct garment preferences. They do
+not automatically alter ranking weights or demonstrate model improvement.
+The endpoint is available in FastAPI's `/docs`; frontend integration is pending.
