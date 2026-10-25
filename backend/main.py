@@ -297,3 +297,16 @@ def feedback_features(user_id: int, db: Session = Depends(get_db)):
     reviews = feedback_context(db, user_id, limit=100)
     return {'user_id': user_id, 'reviewed_recommendations': len(reviews),
             'metrics': summarize_features(reviews)}
+
+
+@app.get('/users/{user_id}/feedback-features.csv', response_class=Response,
+         responses={200: {'content': {'text/csv': {}}}})
+def export_feedback_features(user_id: int, db: Session = Depends(get_db)):
+    from feedback_features import features_csv
+    report = feedback_features(user_id, db)
+    return Response(features_csv(report['metrics']), media_type='text/csv', headers={
+        'Content-Disposition': f'attachment; filename="feedback-features-{user_id}.csv"',
+        'Cache-Control': 'no-store',
+        'X-Reviewed-Recommendations': str(report['reviewed_recommendations']),
+        'X-Review-Window-Limit': '100',
+    })

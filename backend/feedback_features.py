@@ -28,3 +28,24 @@ def summarize_features(reviews):
                        'rating_count': len(ratings),
                        'average_rating': float(ratings.mean()) if len(ratings) else None})
     return result
+
+
+EXPORT_COLUMNS = ['feature', 'value', 'decision', 'review_count', 'like_rate',
+                  'rating_count', 'average_rating']
+
+
+def features_csv(metrics):
+    """Stable columns even without reviews; neutralize spreadsheet formulas."""
+    import csv
+    import io
+    output = io.StringIO(newline='')
+    writer = csv.DictWriter(output, fieldnames=EXPORT_COLUMNS)
+    writer.writeheader()
+    for metric in metrics:
+        row = dict(metric)
+        for field in ('feature', 'value', 'decision'):
+            value = row[field]
+            if value.lstrip().startswith(('=', '+', '-', '@')):
+                row[field] = "'" + value
+        writer.writerow(row)
+    return output.getvalue()

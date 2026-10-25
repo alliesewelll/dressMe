@@ -35,3 +35,30 @@ class FeedbackFeatureTests(unittest.TestCase):
         self.assertTrue(all(row['like_rate'] == 1 for row in result['metrics']))
         self.assertEqual(self.client.get('/users/2/feedback-features').json()['metrics'], [])
         self.assertEqual(self.client.get('/users/999/feedback-features').status_code, 404)
+
+    def test_csv_empty_and_user_scope(self):
+        import csv
+        import io
+        response = self.client.get('/users/2/feedback-features.csv')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.headers['content-type'].startswith('text/csv'))
+        self.assertIn('attachment;', response.headers['content-disposition'])
+        self.assertEqual(response.headers['cache-control'], 'no-store')
+        self.assertEqual(response.headers['x-reviewed-recommendations'], '0')
+        reader = csv.DictReader(io.StringIO(response.text))
+        self.assertIn('average_rating', reader.fieldnames)
+        self.assertEqual(list(reader), [])
+        self.assertEqual(self.client.get('/users/999/feedback-features.csv').status_code, 404)
+
+    def test_csv_preserves_values_and_handles_formula_text(self):
+        import csv
+        import io
+        from feedback_features import features_csv
+        metrics = summarize_features([dict(decision='BUY', reaction='LIKE', rating=None,
+            item={'color': '=1+1', 'category': 'Tops, knit'})])
+        rows = list(csv.DictReader(io.StringIO(features_csv(metrics))))
+        self.assertEqual(rows[0]['value'], 'tops, knit')
+        self.assertEqual(rows[1]['value'], "'=1+1")
+        self.assertEqual(rows[0]['average_rating'], '')
+        self.assertEqual(rows[0]['like_rate'], '1.0')
+        self.assertEqual(rows[0]['review_count'], '1')

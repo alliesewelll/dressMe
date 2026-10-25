@@ -354,3 +354,12 @@ A liked SKIP decision is kept separate from liked BUY advice: these metrics
 measure reactions to recommendations, not direct garment preferences. They do
 not automatically alter ranking weights or demonstrate model improvement.
 The endpoint is available in FastAPI's `/docs`; frontend integration is pending.
+
+Download the same feedback feature metrics with
+`GET /users/{user_id}/feedback-features.csv`. The CSV includes a stable header
+for empty reports, blank missing ratings, and like rates on a 0–1 scale.
+It uses the same latest-review logic and 100-review window as the JSON endpoint.
+Response headers `X-Reviewed-Recommendations` and `X-Review-Window-Limit` expose
+coverage. Spreadsheet formula-like labels are prefixed with an apostrophe.
+No comments, photos, email addresses, or other users' records are exported.
+After downloading, load it with `pd.read_csv("feedback-features-1.csv")`.
