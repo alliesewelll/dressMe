@@ -3,6 +3,7 @@
  const button = document.querySelector('#load-wardrobe-matches');
  const status = document.querySelector('#wardrobe-match-status');
  const results = document.querySelector('#wardrobe-matches');
+ const categoryFilter = document.querySelector('#match-category');
  let generation = 0;
  function reset() {
   generation++;
@@ -19,12 +20,12 @@
   results.innerHTML = '';
   status.textContent = 'Finding your matches…';
   try {
-   const response = await api('wardrobe-ranking?limit=5');
+   const response = await api('wardrobe-ranking?limit=5' + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
    results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p><small>${item.score} / 3 matching points</small></article>`).join('');
    status.textContent = response.items.length
     ? 'Your top wardrobe matches. Points reflect exact or related palette colors and style-keyword matches, not confidence.'
-    : 'Add a piece to your wardrobe to get started.';
+    : categoryFilter.value ? 'No pieces in this category yet. Try All clothing or add a piece.' : 'Add a piece to your wardrobe to get started.';
   } catch (error) {
    if (ticket === generation) status.textContent = `Unable to load matches: ${error.message} Try again.`;
   } finally {
@@ -32,6 +33,7 @@
   }
  };
  // Any wardrobe or preference edit invalidates the previous ranking.
+ categoryFilter.onchange = reset;
  window.addEventListener('wardrobe-context', reset);
  reset();
 })();

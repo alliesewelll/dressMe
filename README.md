@@ -368,3 +368,9 @@ In live mode, the frontend recommendation report now provides **Download color &
 category CSV**. Downloads show progress and retryable errors; switching users
 cancels delivery of an outdated response. Demo mode disables the button.
 Run `node frontend/test-feedback-export.cjs` to verify the download behavior.
+
+Wardrobe matches can now be narrowed using **Find matches in** (All clothing,
+Tops, Bottoms, Dresses, or Outerwear). Select a category and click **Find my matches**.
+The API accepts an optional `category` query parameter; matching ignores case and
+surrounding spaces and happens before ranking and limiting. Switching categories
+clears previous results and prevents an older request from displaying stale matches.

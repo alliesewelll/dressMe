@@ -47,3 +47,15 @@ class RankingTests(unittest.TestCase):
         result = self.client.get('/users/1/wardrobe-ranking').json()['items'][0]
         self.assertEqual(result['score'], 1)
         self.assertIn('warm white', result['reasons'][0])
+
+    def test_category_filter_runs_before_limit_and_is_user_scoped(self):
+        self.client.patch('/users/1/style-profile', json={'undertone': 'warm'})
+        for owner, name, category, color in [(1, 'Coat', 'Outerwear', 'cream'),
+                (1, 'Shirt', ' Tops ', 'blue'), (2, 'Other shirt', 'Tops', 'cream')]:
+            self.client.post(f'/users/{owner}/wardrobe', json={
+                'item_name': name, 'category': category, 'primary_color': color})
+        response = self.client.get('/users/1/wardrobe-ranking', params={'category': ' tops ', 'limit': 1})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item['item_name'] for item in response.json()['items']], ['Shirt'])
+        self.assertEqual(self.client.get('/users/1/wardrobe-ranking?category=Dresses').json()['items'], [])
+        self.assertEqual(len(self.client.get('/users/1/wardrobe-ranking').json()['items']), 2)

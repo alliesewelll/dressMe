@@ -282,11 +282,15 @@ def recommendation_evaluation(user_id: int, db: Session = Depends(get_db)):
 
 @app.get('/users/{user_id}/wardrobe-ranking', response_model=schemas.WardrobeRankingResponse)
 def wardrobe_ranking(user_id: int, limit: int = Query(10, ge=1, le=50),
+                     category: str | None = Query(None, min_length=1, max_length=50),
                      db: Session = Depends(get_db)):
     from wardrobe_ranking import rank_wardrobe
     require_user(user_id, db)
     profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
-    items = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)).all()
+    query = select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)
+    if category is not None:
+        query = query.where(func.lower(func.trim(models.ClothingItem.category)) == category.strip().lower())
+    items = db.scalars(query).all()
     return {'user_id': user_id, 'items': rank_wardrobe(items, profile, limit)}
 
 

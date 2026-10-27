@@ -1,10 +1,10 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches'].map(id=>[id, {}]));
+const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category'].map(id=>[id, {}]));
 const events = {};
-let resolve;
-const context = vm.createContext({document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:()=>new Promise(r=>resolve=r),esc:s=>s.replaceAll('<','&lt;')});
+let resolve, requestedPath;
+const context = vm.createContext({document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:path=>{requestedPath=path;return new Promise(r=>resolve=r)},esc:s=>s.replaceAll('<','&lt;')});
 vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context);
 (async()=>{
  const button=nodes['#load-wardrobe-matches'], results=nodes['#wardrobe-matches'], status=nodes['#wardrobe-match-status'];
@@ -18,6 +18,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context
  assert.equal(results.innerHTML,'');
  request=button.onclick();resolve({items:[]});await request;
  assert.match(status.textContent,/Add a piece/);
+ nodes['#match-category'].value='Tops';nodes['#match-category'].onchange();
+ request=button.onclick();assert.equal(requestedPath,'wardrobe-ranking?limit=5&category=Tops');
+ nodes['#match-category'].value='Bottoms';nodes['#match-category'].onchange();resolve({items:[{item_name:'Old top',score:1,reasons:[]}]});await request;assert.equal(results.innerHTML,'');
+ request=button.onclick();resolve({items:[]});await request;assert.match(status.textContent,/No pieces in this category/);
  context.api=async()=>{throw new Error('Offline')};await button.onclick();
  assert.match(status.textContent,/Try again/);assert.equal(button.disabled,false);
  console.log('Wardrobe match rendering, empty/error, demo, and stale-response checks passed.');
