@@ -363,3 +363,8 @@ Response headers `X-Reviewed-Recommendations` and `X-Review-Window-Limit` expose
 coverage. Spreadsheet formula-like labels are prefixed with an apostrophe.
 No comments, photos, email addresses, or other users' records are exported.
 After downloading, load it with `pd.read_csv("feedback-features-1.csv")`.
+
+In live mode, the frontend recommendation report now provides **Download color &
+category CSV**. Downloads show progress and retryable errors; switching users
+cancels delivery of an outdated response. Demo mode disables the button.
+Run `node frontend/test-feedback-export.cjs` to verify the download behavior.
