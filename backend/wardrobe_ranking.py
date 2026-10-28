@@ -39,23 +39,29 @@ def rank_wardrobe(items, profile, limit=10):
     results = []
     for item in items:
         reasons = []
-        score = 0
+        color_points = 0
+        style_points = 0
+        color_match = 'none'
         color = normalize(item.primary_color)
         related = related_palette_color(color, palette)
         if color in palette:
-            score += 2
+            color_points = 2
+            color_match = 'exact'
             reasons.append(f'{item.primary_color} exactly matches a saved palette color.')
         elif related:
-            score += 1
+            color_points = 1
+            color_match = 'related'
             reasons.append(f'{item.primary_color} is a related shade of {related} in your saved palette; compare the actual garment color.')
         description = ' ' + normalize(' '.join(filter(None, [item.item_name, item.category,
             item.subcategory, item.pattern, item.material]))) + ' '
         matches = sorted(style for style in styles if f' {style} ' in description)
         if matches:
-            score += 1
+            style_points = 1
             reasons.append('Matches your saved style keywords: ' + ', '.join(matches) + '.')
         if not reasons:
             reasons.append('No palette or style-keyword match; still an option to explore.')
         results.append({'item_id': item.item_id, 'item_name': item.item_name,
-                        'score': score, 'reasons': reasons})
+                        'score': color_points + style_points, 'reasons': reasons,
+                        'breakdown': {'color_points': color_points, 'style_points': style_points,
+                                      'color_match': color_match, 'matched_style_keywords': matches}})
     return sorted(results, key=lambda row: (-row['score'], row['item_id']))[:limit]

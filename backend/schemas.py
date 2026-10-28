@@ -150,10 +150,18 @@ class EvaluationResponse(BaseModel):
     metrics: list[RecommendationMetrics]
 
 
+class RankingBreakdown(BaseModel):
+    color_points: int = Field(ge=0, le=2)
+    style_points: int = Field(ge=0, le=1)
+    color_match: Literal['exact', 'related', 'none']
+    matched_style_keywords: list[str]
+
+
 class RankedWardrobeItem(BaseModel):
     item_id: int
     item_name: str
     score: int = Field(ge=0, le=3)
+    breakdown: RankingBreakdown
     reasons: list[str]
 
 

@@ -374,3 +374,9 @@ Tops, Bottoms, Dresses, or Outerwear). Select a category and click **Find my mat
 The API accepts an optional `category` query parameter; matching ignores case and
 surrounding spaces and happens before ranking and limiting. Switching categories
 clears previous results and prevents an older request from displaying stale matches.
+
+Each ranked item also returns a structured `breakdown`: `color_points` (0–2),
+`style_points` (0–1), `color_match` (`exact`, `related`, or `none`), and
+`matched_style_keywords`. The total is the sum of the two point fields; multiple
+matching keywords still award one style point. This makes ranking decisions
+inspectable for debugging and future evaluation without changing ranking order.

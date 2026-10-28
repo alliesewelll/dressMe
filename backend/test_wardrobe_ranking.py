@@ -59,3 +59,15 @@ class RankingTests(unittest.TestCase):
         self.assertEqual([item['item_name'] for item in response.json()['items']], ['Shirt'])
         self.assertEqual(self.client.get('/users/1/wardrobe-ranking?category=Dresses').json()['items'], [])
         self.assertEqual(len(self.client.get('/users/1/wardrobe-ranking').json()['items']), 2)
+
+    def test_breakdown_explains_total_without_double_counting_keywords(self):
+        self.client.patch('/users/1/style-profile', json={'undertone': 'warm', 'preferred_styles': 'knit, casual'})
+        for name, color in [('Casual knit top', 'cream'), ('Knit shirt', 'ivory'), ('Plain shirt', 'blue')]:
+            self.client.post('/users/1/wardrobe', json={'item_name': name, 'primary_color': color})
+        rows = self.client.get('/users/1/wardrobe-ranking').json()['items']
+        self.assertEqual([row['score'] for row in rows], [3, 2, 0])
+        self.assertEqual([row['breakdown']['color_match'] for row in rows], ['exact', 'related', 'none'])
+        self.assertEqual(rows[0]['breakdown']['matched_style_keywords'], ['casual', 'knit'])
+        self.assertEqual(rows[0]['breakdown']['style_points'], 1)
+        for row in rows:
+            self.assertEqual(row['score'], row['breakdown']['color_points'] + row['breakdown']['style_points'])
