@@ -186,3 +186,18 @@ class FeedbackFeaturesResponse(BaseModel):
     reviewed_recommendations: int
     window_limit: int = 100
     metrics: list[FeedbackFeatureMetric]
+
+
+class WardrobeQualityItem(BaseModel):
+    item_id: int
+    item_name: str
+    missing_fields: list[str]
+
+
+class WardrobeQualityResponse(BaseModel):
+    user_id: int
+    item_count: int
+    items_with_missing_details: int
+    missing_counts: dict[str, int]
+    items: list[WardrobeQualityItem]
+    truncated: bool

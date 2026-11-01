@@ -380,3 +380,14 @@ Each ranked item also returns a structured `breakdown`: `color_points` (0–2),
 `matched_style_keywords`. The total is the sum of the two point fields; multiple
 matching keywords still award one style point. This makes ranking decisions
 inspectable for debugging and future evaluation without changing ranking order.
+
+### Wardrobe metadata completeness
+
+`GET /users/{user_id}/wardrobe-quality` reports missing color, category, material,
+pattern, and subcategory values for the selected user's wardrobe. Null, empty,
+and whitespace-only values count as missing. It returns totals across the whole
+wardrobe and up to 50 incomplete items ordered by item ID, with a `truncated`
+flag when more exist. These optional details support palette matching, category
+filtering, and keyword matching; missing details do not make an item invalid.
+This checks completeness, not whether labels are correct or recommendations are
+accurate. Available through the API; a frontend editor for these details is pending.

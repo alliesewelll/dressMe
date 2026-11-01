@@ -314,3 +314,11 @@ def export_feedback_features(user_id: int, db: Session = Depends(get_db)):
         'X-Reviewed-Recommendations': str(report['reviewed_recommendations']),
         'X-Review-Window-Limit': '100',
     })
+
+
+@app.get('/users/{user_id}/wardrobe-quality', response_model=schemas.WardrobeQualityResponse)
+def wardrobe_quality(user_id: int, db: Session = Depends(get_db)):
+    from wardrobe_quality import summarize_quality
+    require_user(user_id, db)
+    items = db.scalars(select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)).all()
+    return {'user_id': user_id, **summarize_quality(items)}
