@@ -391,3 +391,10 @@ flag when more exist. These optional details support palette matching, category
 filtering, and keyword matching; missing details do not make an item invalid.
 This checks completeness, not whether labels are correct or recommendations are
 accurate. Available through the API; a frontend editor for these details is pending.
+
+Wardrobe search now checks names, categories, subcategories, brands, colors,
+patterns, and materials. All search words must match, but may match different
+fields (for example, `pink linen`). Search ignores case and extra whitespace,
+works together with category filters, and displays the number of matching pieces.
+It searches the currently loaded wardrobe in both demo and live mode.
+Run `node frontend/test-wardrobe-search.cjs` for search checks.
