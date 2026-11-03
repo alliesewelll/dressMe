@@ -398,3 +398,18 @@ fields (for example, `pink linen`). Search ignores case and extra whitespace,
 works together with category filters, and displays the number of matching pieces.
 It searches the currently loaded wardrobe in both demo and live mode.
 Run `node frontend/test-wardrobe-search.cjs` for search checks.
+
+### Feedback recency fix and migration
+
+Feedback saves now record a UTC `updated_at` timestamp while preserving the
+original `created_at` and feedback ID. AI context and feature reports order the
+latest review per recommendation by its last save time (falling back to creation
+time for legacy rows). Editing an old review therefore moves it into the recent
+20-review AI context or 100-review feature-report window.
+
+**Existing PostgreSQL databases must apply
+`database/migrations/001_feedback_updated_at.sql` before starting this version.**
+`create_all` only creates new tables; it does not add columns to existing tables.
+The migration is additive and preserves existing reviews. New databases created
+from the ORM or SQL schema already include the column. The migration has not
+been applied to a live PostgreSQL database here; regression tests use SQLite.

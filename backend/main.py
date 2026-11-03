@@ -6,6 +6,7 @@ from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from datetime import datetime, timezone
 
 import models
 import schemas
@@ -244,6 +245,7 @@ def save_feedback(user_id: int, recommendation_id: int, payload: schemas.Feedbac
         db.add(feedback)
     for key, value in payload.model_dump().items():
         setattr(feedback, key, value)
+    feedback.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     db.refresh(feedback)
     return feedback

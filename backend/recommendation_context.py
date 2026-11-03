@@ -16,7 +16,8 @@ def feedback_context(db, user_id, limit=20):
                                   Recommendation.user_id == user_id))
         .outerjoin(ClothingItem, and_(Recommendation.item_id == ClothingItem.item_id,
                                      ClothingItem.user_id == user_id))
-        .order_by(Feedback.feedback_id.desc()).limit(limit)
+        .order_by(func.coalesce(Feedback.updated_at, Feedback.created_at).desc(),
+                  Feedback.feedback_id.desc()).limit(limit)
     ).all()
     return [
         {'reaction': review.feedback, 'rating': review.rating, 'purchased': review.purchased,

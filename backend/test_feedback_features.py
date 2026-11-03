@@ -62,3 +62,32 @@ class FeedbackFeatureTests(unittest.TestCase):
         self.assertEqual(rows[0]['average_rating'], '')
         self.assertEqual(rows[0]['like_rate'], '1.0')
         self.assertEqual(rows[0]['review_count'], '1')
+
+    def test_editing_old_review_moves_it_into_recent_window(self):
+        from datetime import datetime
+        from database import SessionLocal
+        from models import Feedback
+        from recommendation_context import feedback_context
+        from sqlalchemy import select
+        ids = []
+        for reason in ['Older advice', 'Newer advice']:
+            rec = self.client.post('/users/1/recommendations', json={
+                'recommendation': 'BUY', 'recommendation_reason': reason}).json()
+            ids.append(rec['recommendation_id'])
+            self.client.put(f"/users/1/recommendations/{ids[-1]}/feedback", json={'feedback': 'LIKE'})
+        with SessionLocal() as db:
+            reviews = db.scalars(select(Feedback).order_by(Feedback.feedback_id)).all()
+            for year, review in zip([2020, 2021], reviews):
+                review.created_at = datetime(year, 1, 1)
+                review.updated_at = None
+            original_created = reviews[0].created_at
+            original_id = reviews[0].feedback_id
+            db.commit()
+            self.assertEqual(feedback_context(db, 1, limit=1)[0]['reason'], 'Newer advice')
+        response = self.client.put(f'/users/1/recommendations/{ids[0]}/feedback', json={'feedback': 'DISLIKE'})
+        self.assertEqual(response.json()['feedback_id'], original_id)
+        with SessionLocal() as db:
+            self.assertEqual(feedback_context(db, 1, limit=1)[0]['reason'], 'Older advice')
+            self.assertEqual(feedback_context(db, 1, limit=1)[0]['reaction'], 'DISLIKE')
+            self.assertEqual(db.get(Feedback, original_id).created_at, original_created)
+            self.assertIsNotNone(db.get(Feedback, original_id).updated_at)

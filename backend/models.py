@@ -120,6 +120,7 @@ class Feedback(Base):
 	times_worn: Mapped[int] = mapped_column(default=0, nullable=False)
 	feedback: Mapped[str] = mapped_column(String(255), nullable=False)
 	comments: Mapped[str | None] = mapped_column(Text)
+	updated_at: Mapped[datetime | None] = mapped_column(DateTime)
 	created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
 
 	user: Mapped[User] = relationship(back_populates="feedback")
