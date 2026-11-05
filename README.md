@@ -413,3 +413,11 @@ time for legacy rows). Editing an old review therefore moves it into the recent
 The migration is additive and preserves existing reviews. New databases created
 from the ORM or SQL schema already include the column. The migration has not
 been applied to a live PostgreSQL database here; regression tests use SQLite.
+
+The wardrobe-ranking API accepts `min_score=0..3` (default `0`). Use
+`/users/1/wardrobe-ranking?min_score=1` to exclude items with no palette or
+style-keyword matches, or `min_score=3` for exact palette plus keyword matches.
+The threshold combines with `category` and applies before `limit`. An empty
+result means no items meet the selected threshold, not that the wardrobe is
+empty. Scores are heuristic matching points, not confidence or quality ratings.
+This option is currently API-only; the frontend retains its existing default.

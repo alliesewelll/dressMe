@@ -26,7 +26,7 @@ def related_palette_color(color, palette):
     return None
 
 
-def rank_wardrobe(items, profile, limit=10):
+def rank_wardrobe(items, profile, limit=10, min_score=0):
     palette = set()
     styles = set()
     if profile:
@@ -64,4 +64,5 @@ def rank_wardrobe(items, profile, limit=10):
                         'score': color_points + style_points, 'reasons': reasons,
                         'breakdown': {'color_points': color_points, 'style_points': style_points,
                                       'color_match': color_match, 'matched_style_keywords': matches}})
+    results = [row for row in results if row['score'] >= min_score]
     return sorted(results, key=lambda row: (-row['score'], row['item_id']))[:limit]

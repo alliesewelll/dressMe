@@ -71,3 +71,22 @@ class RankingTests(unittest.TestCase):
         self.assertEqual(rows[0]['breakdown']['style_points'], 1)
         for row in rows:
             self.assertEqual(row['score'], row['breakdown']['color_points'] + row['breakdown']['style_points'])
+
+    def test_minimum_score_filters_and_combines_with_category(self):
+        self.client.patch('/users/1/style-profile', json={'undertone': 'warm', 'preferred_styles': 'knit'})
+        for name, color, category in [('Plain', 'blue', 'Tops'), ('Ivory', 'ivory', 'Tops'),
+                                      ('Knit', 'cream', 'Tops'), ('Coat', 'cream', 'Outerwear')]:
+            self.client.post('/users/1/wardrobe', json={'item_name': name, 'primary_color': color, 'category': category})
+        base = '/users/1/wardrobe-ranking'
+        self.assertEqual(len(self.client.get(base).json()['items']), 4)
+        rows = self.client.get(base, params={'min_score': 1, 'category': 'Tops'}).json()['items']
+        self.assertEqual([row['item_name'] for row in rows], ['Knit', 'Ivory'])
+        rows = self.client.get(base, params={'min_score': 3, 'limit': 1}).json()['items']
+        self.assertEqual([row['item_name'] for row in rows], ['Knit'])
+        self.assertEqual(self.client.get(base, params={'min_score': 3, 'category': 'Outerwear'}).json()['items'], [])
+        for invalid in [-1, 4, 'bad']:
+            self.assertEqual(self.client.get(base, params={'min_score': invalid}).status_code, 422)
+
+    def test_minimum_score_without_preferences_returns_no_matches(self):
+        self.client.post('/users/1/wardrobe', json={'item_name': 'Shirt', 'primary_color': 'pink'})
+        self.assertEqual(self.client.get('/users/1/wardrobe-ranking?min_score=1').json()['items'], [])
