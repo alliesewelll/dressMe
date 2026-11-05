@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category'].map(id=>[id, {}]));
+const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category','#match-strength'].map(id=>[id, {}]));
 const events = {};
 let resolve, requestedPath;
 const context = vm.createContext({document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:path=>{requestedPath=path;return new Promise(r=>resolve=r)},esc:s=>s.replaceAll('<','&lt;')});
@@ -19,9 +19,14 @@ vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context
  request=button.onclick();resolve({items:[]});await request;
  assert.match(status.textContent,/Add a piece/);
  nodes['#match-category'].value='Tops';nodes['#match-category'].onchange();
- request=button.onclick();assert.equal(requestedPath,'wardrobe-ranking?limit=5&category=Tops');
+ request=button.onclick();assert.equal(requestedPath,'wardrobe-ranking?limit=5&min_score=0&category=Tops');
  nodes['#match-category'].value='Bottoms';nodes['#match-category'].onchange();resolve({items:[{item_name:'Old top',score:1,reasons:[]}]});await request;assert.equal(results.innerHTML,'');
  request=button.onclick();resolve({items:[]});await request;assert.match(status.textContent,/No pieces in this category/);
+ nodes['#match-strength'].value='3';nodes['#match-strength'].onchange();
+ request=button.onclick();assert.equal(requestedPath,'wardrobe-ranking?limit=5&min_score=3&category=Bottoms');
+ resolve({items:[]});await request;assert.match(status.textContent,/No pieces meet these filters/);
+ request=button.onclick();nodes['#match-strength'].value='0';nodes['#match-strength'].onchange();
+ resolve({items:[{item_name:'Old strict result',score:3,reasons:[]}]});await request;assert.equal(results.innerHTML,'');
  context.api=async()=>{throw new Error('Offline')};await button.onclick();
  assert.match(status.textContent,/Try again/);assert.equal(button.disabled,false);
  console.log('Wardrobe match rendering, empty/error, demo, and stale-response checks passed.');

@@ -420,4 +420,7 @@ style-keyword matches, or `min_score=3` for exact palette plus keyword matches.
 The threshold combines with `category` and applies before `limit`. An empty
 result means no items meet the selected threshold, not that the wardrobe is
 empty. Scores are heuristic matching points, not confidence or quality ratings.
-This option is currently API-only; the frontend retains its existing default.
+The frontend exposes this through **Match strength**: Explore all pieces (0),
+At least one match (1), or Exact palette + style match (3). It combines with the
+category selection. Changing either filter clears old results; empty filtered
+results suggest relaxing filters rather than claiming the wardrobe is empty.
