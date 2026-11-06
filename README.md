@@ -424,3 +424,14 @@ The frontend exposes this through **Match strength**: Explore all pieces (0),
 At least one match (1), or Exact palette + style match (3). It combines with the
 category selection. Changing either filter clears old results; empty filtered
 results suggest relaxing filters rather than claiming the wardrobe is empty.
+
+### Preview recommendations from the command line
+
+Run `.venv/bin/python analysis/preview_ranking.py --user-id 1 --category Tops --min-score 1 --limit 5`
+from the project root to print JSON containing ranked owned items, reasons, and
+score breakdowns. It uses the configured `DATABASE_URL` and the same ranking
+function and response schema as the API, without starting the web server,
+calling AI, or saving recommendations. Output includes wardrobe item names;
+treat exported JSON as user data. Redirect stdout to a file if you want to save
+an evaluation snapshot. This is a ranking preview, not a model accuracy report.
+Run `.venv/bin/python -m unittest discover -s analysis -p 'test_*.py'` for analysis tests.
