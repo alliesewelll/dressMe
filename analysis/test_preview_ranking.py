@@ -1,7 +1,7 @@
 import unittest
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import Session
-from preview_ranking import preview
+from preview_ranking import preview, coverage_report
 from models import Base, User, StyleProfile, ClothingItem, Recommendation
 
 
@@ -20,8 +20,27 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual([row['item_name'] for row in result['items']], ['Knit top'])
             self.assertEqual(result['items'][0]['breakdown']['color_points'], 2)
             self.assertEqual(result['method'], 'palette-keywords-v2')
+            self.assertNotIn('coverage', result)
+            report = preview(db, 1, limit=1, min_score=3, include_coverage=True)['coverage']
+            self.assertEqual(report['candidate_count'], 2)
+            self.assertEqual(report['eligible_count'], 1)
+            self.assertEqual(report['returned_count'], 1)
+            self.assertEqual(report['match_coverage'], 1.0)
+            filtered = preview(db, 1, category='Tops', include_coverage=True)['coverage']
+            self.assertEqual(filtered['candidate_count'], 1)
             self.assertEqual(preview(db, 1, 'Dresses')['items'], [])
             self.assertEqual(db.scalar(select(func.count()).select_from(Recommendation)), 0)
             with self.assertRaisesRegex(ValueError, 'User not found'):
                 preview(db, 99)
         engine.dispose()
+
+    def test_coverage_denominator_and_empty_pool(self):
+        report = coverage_report([{'score': score} for score in [3, 2, 0, 0]], 2, 1)
+        self.assertEqual(report['match_coverage'], 0.5)
+        self.assertEqual(report['score_distribution'], {'0': 2, '1': 0, '2': 1, '3': 1})
+        self.assertEqual(report['eligible_count'], 2)
+        self.assertEqual(report['returned_count'], 1)
+        empty = coverage_report([], 1, 5)
+        self.assertIsNone(empty['match_coverage'])
+        self.assertEqual(empty['returned_count'], 0)
+        self.assertEqual(coverage_report([{'score': 0}], 1, 5)['match_coverage'], 0)

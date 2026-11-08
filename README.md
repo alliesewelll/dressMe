@@ -435,3 +435,16 @@ calling AI, or saving recommendations. Output includes wardrobe item names;
 treat exported JSON as user data. Redirect stdout to a file if you want to save
 an evaluation snapshot. This is a ranking preview, not a model accuracy report.
 Run `.venv/bin/python -m unittest discover -s analysis -p 'test_*.py'` for analysis tests.
+
+Add `--coverage` to the ranking preview command to include candidate counts,
+score distribution (0–3), the fraction scoring above zero, and eligible versus
+returned counts. Example:
+
+```sh
+.venv/bin/python analysis/preview_ranking.py --user-id 1 --min-score 1 --limit 5 --coverage
+```
+
+Coverage uses all candidates after category filtering, before the score threshold
+or result limit. An empty candidate pool reports null coverage; a nonempty pool
+with no matches reports zero. These diagnostics describe rule-based matches,
+not accuracy or user satisfaction. Without the flag, the JSON shape is unchanged.
