@@ -448,3 +448,10 @@ Coverage uses all candidates after category filtering, before the score threshol
 or result limit. An empty candidate pool reports null coverage; a nonempty pool
 with no matches reports zero. These diagnostics describe rule-based matches,
 not accuracy or user satisfaction. Without the flag, the JSON shape is unchanged.
+
+The ranking API now supports `include_coverage=true`, for example
+`/users/1/wardrobe-ranking?category=Tops&min_score=1&limit=5&include_coverage=true`.
+It adds the same coverage report as the CLI, using a shared calculation. Counts
+include all category candidates before thresholding and limiting. Empty-pool
+coverage remains JSON null. Existing requests omit this optional report and keep
+their previous response shape. Frontend display of coverage is not yet included.

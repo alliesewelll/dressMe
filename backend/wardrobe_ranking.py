@@ -66,3 +66,21 @@ def rank_wardrobe(items, profile, limit=10, min_score=0):
                                       'color_match': color_match, 'matched_style_keywords': matches}})
     results = [row for row in results if row['score'] >= min_score]
     return sorted(results, key=lambda row: (-row['score'], row['item_id']))[:limit]
+
+
+def coverage_report(ranked, min_score, limit):
+    """Describe the full category candidate pool before thresholding or truncation."""
+    count = len(ranked)
+    matching = sum(row['score'] > 0 for row in ranked)
+    eligible = sum(row['score'] >= min_score for row in ranked)
+    return {
+        'candidate_count': count,
+        'matching_item_count': matching,
+        'match_coverage': matching / count if count else None,
+        'score_distribution': {str(score): sum(row['score'] == score for row in ranked) for score in range(4)},
+        'eligible_count': eligible,
+        'returned_count': min(eligible, limit),
+        'min_score': min_score,
+        'limit': limit,
+        'note': 'Heuristic match coverage, not recommendation accuracy or user satisfaction.',
+    }

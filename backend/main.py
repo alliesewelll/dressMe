@@ -282,19 +282,25 @@ def recommendation_evaluation(user_id: int, db: Session = Depends(get_db)):
     return {'user_id': user_id, 'metrics': summarize(frame)}
 
 
-@app.get('/users/{user_id}/wardrobe-ranking', response_model=schemas.WardrobeRankingResponse)
+@app.get('/users/{user_id}/wardrobe-ranking', response_model=schemas.WardrobeRankingResponse, response_model_exclude_unset=True)
 def wardrobe_ranking(user_id: int, limit: int = Query(10, ge=1, le=50),
+                     include_coverage: bool = False,
                      min_score: int = Query(0, ge=0, le=3),
                      category: str | None = Query(None, min_length=1, max_length=50),
                      db: Session = Depends(get_db)):
-    from wardrobe_ranking import rank_wardrobe
+    from wardrobe_ranking import rank_wardrobe, coverage_report
     require_user(user_id, db)
     profile = db.scalar(select(models.StyleProfile).where(models.StyleProfile.user_id == user_id))
     query = select(models.ClothingItem).where(models.ClothingItem.user_id == user_id)
     if category is not None:
         query = query.where(func.lower(func.trim(models.ClothingItem.category)) == category.strip().lower())
     items = db.scalars(query).all()
-    return {'user_id': user_id, 'items': rank_wardrobe(items, profile, limit, min_score)}
+    ranked = rank_wardrobe(items, profile, limit=len(items))
+    result = {'user_id': user_id, 'method': 'palette-keywords-v2',
+              'items': [row for row in ranked if row['score'] >= min_score][:limit]}
+    if include_coverage:
+        result['coverage'] = coverage_report(ranked, min_score, limit)
+    return result
 
 
 @app.get('/users/{user_id}/feedback-features', response_model=schemas.FeedbackFeaturesResponse)

@@ -90,3 +90,20 @@ class RankingTests(unittest.TestCase):
     def test_minimum_score_without_preferences_returns_no_matches(self):
         self.client.post('/users/1/wardrobe', json={'item_name': 'Shirt', 'primary_color': 'pink'})
         self.assertEqual(self.client.get('/users/1/wardrobe-ranking?min_score=1').json()['items'], [])
+
+    def test_optional_coverage_uses_full_filtered_pool(self):
+        self.client.patch('/users/1/style-profile', json={'undertone': 'warm'})
+        for owner, color, category in [(1, 'cream', 'Tops'), (1, 'blue', 'Tops'),
+                                       (1, 'cream', 'Outerwear'), (2, 'cream', 'Tops')]:
+            self.client.post(f'/users/{owner}/wardrobe', json={'item_name': 'Piece', 'primary_color': color, 'category': category})
+        url = '/users/1/wardrobe-ranking'
+        self.assertNotIn('coverage', self.client.get(url).json())
+        result = self.client.get(url, params={'include_coverage': True, 'category': 'Tops', 'limit': 1, 'min_score': 1}).json()
+        report = result['coverage']
+        self.assertEqual(report['candidate_count'], 2)
+        self.assertEqual(report['match_coverage'], .5)
+        self.assertEqual(report['eligible_count'], 1)
+        self.assertEqual(report['returned_count'], len(result['items']))
+        empty = self.client.get(url, params={'include_coverage': True, 'category': 'Dresses'}).json()['coverage']
+        self.assertIsNone(empty['match_coverage'])
+        self.assertEqual(empty['candidate_count'], 0)

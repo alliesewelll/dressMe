@@ -165,9 +165,22 @@ class RankedWardrobeItem(BaseModel):
     reasons: list[str]
 
 
+class RankingCoverage(BaseModel):
+    candidate_count: int
+    matching_item_count: int
+    match_coverage: float | None
+    score_distribution: dict[str, int]
+    eligible_count: int
+    returned_count: int
+    min_score: int
+    limit: int
+    note: str
+
+
 class WardrobeRankingResponse(BaseModel):
     user_id: int
     method: str = 'palette-keywords-v2'
+    coverage: RankingCoverage | None = None
     items: list[RankedWardrobeItem]
 
 
