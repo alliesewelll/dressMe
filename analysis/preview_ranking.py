@@ -26,6 +26,8 @@ def preview(db, user_id, category=None, limit=10, min_score=0, include_coverage=
     ranked = rank_wardrobe(items, profile, limit=len(items))
     selected = [row for row in ranked if row['score'] >= min_score][:limit]
     result = WardrobeRankingResponse(user_id=user_id, items=selected).model_dump(exclude={'coverage'})
+    result['filters'] = {'category': category.strip().lower() if category is not None else None,
+                         'limit': limit, 'min_score': min_score}
     if include_coverage:
         result['coverage'] = coverage_report(ranked, min_score, limit)
     return result

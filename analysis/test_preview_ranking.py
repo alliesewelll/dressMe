@@ -21,6 +21,7 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(result['items'][0]['breakdown']['color_points'], 2)
             self.assertEqual(result['method'], 'palette-keywords-v2')
             self.assertNotIn('coverage', result)
+            self.assertEqual(result['filters'], {'category': 'tops', 'limit': 1, 'min_score': 3})
             report = preview(db, 1, limit=1, min_score=3, include_coverage=True)['coverage']
             self.assertEqual(report['candidate_count'], 2)
             self.assertEqual(report['eligible_count'], 1)

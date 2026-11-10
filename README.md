@@ -472,3 +472,10 @@ never changes the database. Compare the same wardrobe, category, threshold, and
 limit to isolate algorithm changes; snapshots do not currently record every
 input, so the tool cannot enforce identical conditions. Differences describe
 shortlist stability, not accuracy or improvement in user satisfaction.
+
+Ranking previews now also record normalized `filters` (category, limit, and
+minimum score). Comparisons return `filters_match`, explicit `filter_changes`,
+and warnings when filters differ. Older snapshots remain supported, with null
+`filters_match` when metadata is unavailable. Matching filters alone do not
+establish a controlled experiment: wardrobe and profile changes are not checked.
+This metadata addition affects CLI previews only, not the ranking API response.

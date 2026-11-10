@@ -27,3 +27,18 @@ class ComparisonTests(unittest.TestCase):
                 compare(snapshot([1]), invalid)
         with self.assertRaisesRegex(ValueError, 'same user'):
             compare(snapshot([1]), snapshot([1], user=2))
+
+    def test_filter_changes_and_legacy_snapshots(self):
+        before, after = snapshot([1]), snapshot([1])
+        self.assertIsNone(compare(before, after)['filters_match'])
+        before['filters'] = {'category': ' Tops ', 'limit': 5, 'min_score': 1}
+        after['filters'] = {'category': 'tops', 'limit': 5, 'min_score': 1}
+        self.assertTrue(compare(before, after)['filters_match'])
+        after['filters']['limit'] = 10
+        result = compare(before, after)
+        self.assertFalse(result['filters_match'])
+        self.assertEqual(result['filter_changes'], [{'field': 'limit', 'before': 5, 'after': 10}])
+        self.assertIn('Filters differ', result['warnings'][0])
+        after['filters']['min_score'] = True
+        with self.assertRaises(ValueError):
+            compare(before, after)
