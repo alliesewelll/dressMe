@@ -455,3 +455,20 @@ It adds the same coverage report as the CLI, using a shared calculation. Counts
 include all category candidates before thresholding and limiting. Empty-pool
 coverage remains JSON null. Existing requests omit this optional report and keep
 their previous response shape. Frontend display of coverage is not yet included.
+
+### Compare saved ranking previews
+
+Save JSON from `analysis/preview_ranking.py` before and after a change, then run:
+
+```sh
+.venv/bin/python analysis/compare_rankings.py before.json after.json
+```
+
+The comparison reports entries/exits, rank movement for shared items (positive
+positions gained means moving up), and Jaccard overlap: shared IDs divided by
+all distinct IDs. Two empty lists produce null overlap. It rejects duplicate
+IDs, malformed item lists, and different users. It reads local files only and
+never changes the database. Compare the same wardrobe, category, threshold, and
+limit to isolate algorithm changes; snapshots do not currently record every
+input, so the tool cannot enforce identical conditions. Differences describe
+shortlist stability, not accuracy or improvement in user satisfaction.
