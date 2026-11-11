@@ -21,12 +21,17 @@
   results.innerHTML = '';
   status.textContent = 'Finding your matches…';
   try {
-   const response = await api('wardrobe-ranking?limit=5&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
+   const response = await api('wardrobe-ranking?limit=5&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
    results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p><small>${item.score} / 3 matching points</small></article>`).join('');
    status.textContent = response.items.length
     ? 'Your top wardrobe matches. Points reflect exact or related palette colors and style-keyword matches, not confidence.'
     : Number(strengthFilter.value) > 0 ? 'No pieces meet these filters. Try Explore all pieces, another category, or update your style preferences.' : categoryFilter.value ? 'No pieces in this category yet. Try All clothing or add a piece.' : 'Add a piece to your wardrobe to get started.';
+   const coverage = response.coverage;
+   if (coverage && coverage.candidate_count > 0) {
+    const scope = categoryFilter.value ? 'in this category' : 'in your wardrobe';
+    status.textContent = `${coverage.matching_item_count} of ${coverage.candidate_count} pieces ${scope} match your palette or style keywords. ${coverage.eligible_count} pass your match-strength filter; showing ${response.items.length}. ` + status.textContent;
+   }
   } catch (error) {
    if (ticket === generation) status.textContent = `Unable to load matches: ${error.message} Try again.`;
   } finally {
