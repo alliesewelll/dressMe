@@ -1,11 +1,28 @@
 import unittest
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import Session
-from preview_ranking import preview, coverage_report
+from preview_ranking import preview, coverage_report, input_fingerprints
 from models import Base, User, StyleProfile, ClothingItem, Recommendation
 
 
 class PreviewTests(unittest.TestCase):
+    def test_fingerprints_track_inputs_not_row_order_or_unused_fields(self):
+        first = ClothingItem(item_id=1, item_name='Top', primary_color='cream')
+        second = ClothingItem(item_id=2, item_name='Jeans', primary_color='blue')
+        profile = StyleProfile(undertone='warm', preferred_styles='knit')
+        original = input_fingerprints([first, second], profile)
+        self.assertEqual(original, input_fingerprints([second, first], profile))
+        first.times_worn = 10
+        self.assertEqual(original, input_fingerprints([first, second], profile))
+        first.primary_color = 'red'
+        changed = input_fingerprints([first, second], profile)
+        self.assertNotEqual(original['wardrobe'], changed['wardrobe'])
+        self.assertEqual(original['profile'], changed['profile'])
+        profile.preferred_styles = 'denim'
+        self.assertNotEqual(changed['profile'], input_fingerprints([first, second], profile)['profile'])
+        self.assertNotEqual(original['wardrobe'], input_fingerprints([first], profile)['wardrobe'])
+        self.assertEqual(input_fingerprints([], None), input_fingerprints([], None))
+
     def test_scoped_filtered_ranking_and_no_writes(self):
         engine = create_engine('sqlite://')
         Base.metadata.create_all(engine)
@@ -21,6 +38,7 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(result['items'][0]['breakdown']['color_points'], 2)
             self.assertEqual(result['method'], 'palette-keywords-v2')
             self.assertNotIn('coverage', result)
+            self.assertEqual(result['input_fingerprints']['version'], 1)
             self.assertEqual(result['filters'], {'category': 'tops', 'limit': 1, 'min_score': 3})
             report = preview(db, 1, limit=1, min_score=3, include_coverage=True)['coverage']
             self.assertEqual(report['candidate_count'], 2)

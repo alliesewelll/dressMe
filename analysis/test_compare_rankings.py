@@ -7,6 +7,31 @@ def snapshot(ids, user=1):
 
 
 class ComparisonTests(unittest.TestCase):
+    def test_input_consistency_and_legacy_support(self):
+        before, after = snapshot([1]), snapshot([1])
+        self.assertEqual(compare(before, after)['input_matches'], {'wardrobe': None, 'profile': None})
+        before['input_fingerprints'] = {'version': 1, 'wardrobe': 'a' * 64, 'profile': 'b' * 64}
+        self.assertIsNone(compare(before, after)['input_matches']['wardrobe'])
+        after['input_fingerprints'] = dict(before['input_fingerprints'])
+        self.assertEqual(compare(before, after)['input_matches'], {'wardrobe': True, 'profile': True})
+        for field in ('wardrobe', 'profile'):
+            after['input_fingerprints'][field] = 'c' * 64
+            self.assertFalse(compare(before, after)['input_matches'][field])
+            self.assertTrue(any(f'{field.capitalize()} inputs differ' in warning
+                                for warning in compare(before, after)['warnings']))
+        after['input_fingerprints']['version'] = 2
+        self.assertIsNone(compare(before, after)['input_matches']['wardrobe'])
+        before['input_fingerprints']['version'] = 2
+        self.assertIsNone(compare(before, after)['input_matches']['wardrobe'])
+
+    def test_malformed_fingerprints(self):
+        for invalid in [None, {}, {'version': True, 'wardrobe': 'a' * 64, 'profile': 'b' * 64},
+                        {'version': 1, 'wardrobe': 'bad', 'profile': 'b' * 64}]:
+            after = snapshot([1])
+            after['input_fingerprints'] = invalid
+            with self.assertRaises(ValueError):
+                compare(snapshot([1]), after)
+
     def test_entries_exits_and_rank_movement(self):
         result = compare(snapshot([1, 2, 3]), snapshot([3, 2, 4]))
         self.assertEqual(result['overlap_jaccard'], .5)

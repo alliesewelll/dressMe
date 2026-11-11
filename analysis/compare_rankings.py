@@ -1,6 +1,7 @@
 """Compare two saved preview JSON files; changes do not establish improvement."""
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -9,6 +10,16 @@ def validate(snapshot):
         raise ValueError('Each snapshot must contain an integer user_id.')
     if not isinstance(snapshot.get('items'), list):
         raise ValueError('Each snapshot must contain an items list.')
+    if 'input_fingerprints' in snapshot:
+        fingerprints = snapshot['input_fingerprints']
+        if not isinstance(fingerprints, dict) or set(fingerprints) != {'version', 'wardrobe', 'profile'}:
+            raise ValueError('Input fingerprints must contain version, wardrobe, and profile.')
+        if type(fingerprints['version']) is not int or fingerprints['version'] < 1:
+            raise ValueError('Fingerprint version must be a positive integer.')
+        for field in ('wardrobe', 'profile'):
+            value = fingerprints[field]
+            if not isinstance(value, str) or re.fullmatch(r'[0-9a-f]{64}', value) is None:
+                raise ValueError('Input fingerprints must be lowercase SHA-256 digests.')
     if 'filters' in snapshot:
         filters = snapshot['filters']
         if not isinstance(filters, dict) or set(filters) != {'category', 'limit', 'min_score'}:
@@ -48,7 +59,17 @@ def compare(before, after):
         warnings.append('Filter metadata is missing; filter consistency cannot be checked.')
     elif filter_changes:
         warnings.append('Filters differ. Shortlist changes may be caused by the selected filters.')
-    warnings.append('Wardrobe and profile consistency are not checked.')
+    previous_inputs, current_inputs = before.get('input_fingerprints'), after.get('input_fingerprints')
+    inputs_known = (previous_inputs is not None and current_inputs is not None
+                    and previous_inputs['version'] == current_inputs['version'] == 1)
+    input_matches = {field: previous_inputs[field] == current_inputs[field] if inputs_known else None
+                     for field in ('wardrobe', 'profile')}
+    if not inputs_known:
+        warnings.append('Input fingerprints are missing or use an unsupported version; wardrobe and profile consistency cannot be checked.')
+    else:
+        for field, matches in input_matches.items():
+            if not matches:
+                warnings.append(f'{field.capitalize()} inputs differ. Shortlist changes may reflect changed inputs.')
     old_rank = {item_id: rank for rank, item_id in enumerate(old, 1)}
     new_rank = {item_id: rank for rank, item_id in enumerate(new, 1)}
     shared = set(old) & set(new)
@@ -59,6 +80,7 @@ def compare(before, after):
         'before_count': len(old), 'after_count': len(new),
         'filters_match': not filter_changes if filters_known else None,
         'filter_changes': filter_changes,
+        'input_matches': input_matches,
         'warnings': warnings,
         'shared_count': len(shared),
         'overlap_jaccard': len(shared) / len(union) if union else None,

@@ -1,5 +1,6 @@
 """Read-only wardrobe ranking preview; does not call AI or save recommendations."""
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -15,6 +16,21 @@ from schemas import WardrobeRankingResponse
 from wardrobe_ranking import rank_wardrobe, coverage_report
 
 
+def input_fingerprints(items, profile):
+    """Versioned raw ranking inputs; independent of database row ordering."""
+    def digest(value):
+        encoded = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'))
+        return hashlib.sha256(encoded.encode('utf-8')).hexdigest()
+
+    fields = ('item_id', 'item_name', 'category', 'subcategory', 'primary_color', 'pattern', 'material')
+    wardrobe = [{field: getattr(item, field) for field in fields}
+                for item in sorted(items, key=lambda item: item.item_id)]
+    preferences = ({field: getattr(profile, field)
+                    for field in ('color_season', 'undertone', 'preferred_styles')}
+                   if profile is not None else None)
+    return {'version': 1, 'wardrobe': digest(wardrobe), 'profile': digest(preferences)}
+
+
 def preview(db, user_id, category=None, limit=10, min_score=0, include_coverage=False):
     if db.get(User, user_id) is None:
         raise ValueError('User not found')
@@ -28,6 +44,7 @@ def preview(db, user_id, category=None, limit=10, min_score=0, include_coverage=
     result = WardrobeRankingResponse(user_id=user_id, items=selected).model_dump(exclude={'coverage'})
     result['filters'] = {'category': category.strip().lower() if category is not None else None,
                          'limit': limit, 'min_score': min_score}
+    result['input_fingerprints'] = input_fingerprints(items, profile)
     if include_coverage:
         result['coverage'] = coverage_report(ranked, min_score, limit)
     return result

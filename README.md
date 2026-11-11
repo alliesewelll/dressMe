@@ -477,5 +477,17 @@ Ranking previews now also record normalized `filters` (category, limit, and
 minimum score). Comparisons return `filters_match`, explicit `filter_changes`,
 and warnings when filters differ. Older snapshots remain supported, with null
 `filters_match` when metadata is unavailable. Matching filters alone do not
-establish a controlled experiment: wardrobe and profile changes are not checked.
+establish a controlled experiment; input consistency is checked separately below.
 This metadata addition affects CLI previews only, not the ranking API response.
+
+New CLI previews include versioned SHA-256 `input_fingerprints` for the full
+category-filtered candidate pool (before score/limit filtering) and ranking-relevant
+profile fields. Comparisons return `input_matches.wardrobe` and
+`input_matches.profile`: true for matching inputs, false with a warning for changed
+inputs, or null for missing/unsupported versions. Row ordering and unused fields
+such as wear counts do not affect these fingerprints. Raw text edits do, even if
+the ranker normalizes them to the same value. These checks cover item ID, name,
+category, subcategory, color, pattern, material, and profile season, undertone,
+and style keywords—not changes to palette catalogs or ranking code. Matching
+fingerprints do not establish recommendation quality, and hashes are not a
+privacy guarantee. Older saved previews remain supported.
