@@ -54,21 +54,56 @@ function render(){
 }
 function renderGrid(){const filtered=filterWardrobe(items,$('#search').value,category);
  $('#search-status').textContent=`${filtered.length} of ${items.length} pieces shown`;
- $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces here yet. Add a piece or try another search.</div>';
+ $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div><button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces here yet. Add a piece or try another search.</div>';
 }
 function show(id){const d=$(id);d.querySelector('.form-error').textContent='';d.showModal();}
 $('#hero-art').innerHTML=art('Outerwear','Cream');
 $('#search').addEventListener('input',renderGrid);
 $('.filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.classList.toggle('selected',x===b));renderGrid()});
-$('#add').onclick=()=>show('#item-dialog');$('#connection').onclick=()=>show('#connect-dialog');
+$('#add').onclick=()=>openItemForm();$('#connection').onclick=()=>show('#connect-dialog');
 $('#edit-profile').onclick=()=>{const f=$('#profile-form');for(const key of ['color_season','undertone','body_type']){const v=profile[key]||'';f.elements[key].value=[...f.elements[key].options].find(o=>o.value.toLowerCase()===v.toLowerCase())?.value||'';}f.elements.preferred_styles.value=profile.preferred_styles||'';show('#profile-dialog')};
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
 $('#demo').onclick=()=>{demo();$('#connect-dialog').close();$('#message').textContent='Sample wardrobe loaded.'};
 async function submit(form,fn){const b=form.querySelector('[type=submit]');b.disabled=true;form.querySelector('.form-error').textContent='';try{await fn();form.closest('dialog').close()}catch(e){form.querySelector('.form-error').textContent=e.message}finally{b.disabled=false}}
 $('#connect-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const oldUser=user;user=Number(e.target.elements.user.value);try{await loadLive();$('#message').textContent='Your wardrobe is connected.'}catch(error){user=oldUser;throw error}})};
-$('#item-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k].trim()||null;if(!body.item_name)throw new Error('Please give your piece a name.');if(mode==='demo')items.unshift({...body,item_id:Math.max(0,...items.map(i=>i.item_id))+1,times_worn:0});else items.unshift(await api('wardrobe','POST',body));render();e.target.reset();$('#message').textContent='Your new piece is in the wardrobe.'})};
+let editingItem = null;
+function openItemForm(item = null) {
+ const form = $('#item-form');
+ form.reset();
+ editingItem = {id: item?.item_id ?? null, mode, user};
+ for (const name of ['item_name','category','primary_color','brand','subcategory','material','pattern']) {
+  if (item) {
+   // Preserve categories imported through the API that are not in the menu.
+   if (name === 'category' && item[name] && ![...form.elements[name].options].some(o => o.value === item[name])) {
+    form.elements[name].add(new Option(item[name], item[name]));
+   }
+   form.elements[name].value = item[name] ?? '';
+  }
+ }
+ form.querySelector('h2').textContent = item ? 'Edit your piece' : 'Add a piece';
+ form.querySelector('[type=submit]').textContent = item ? 'Save changes' : 'Save to wardrobe';
+ show('#item-dialog');
+}
+async function saveItemForm(form) {
+ const target = editingItem;
+ if (!target || target.mode !== mode || target.user !== user) throw new Error('Your wardrobe changed. Close this form and open it again.');
+ const body = Object.fromEntries(new FormData(form));
+ for (const key in body) body[key] = body[key].trim() || null;
+ if (!body.item_name) throw new Error('Please give your piece a name.');
+ const existing = target.id === null ? null : items.find(item => item.item_id === target.id);
+ if (target.id !== null && !existing) throw new Error('This piece is no longer in your wardrobe.');
+ const saved = mode === 'demo'
+  ? {...(existing || {item_id: Math.max(0, ...items.map(i => i.item_id)) + 1, times_worn: 0}), ...body}
+  : await api(target.id === null ? 'wardrobe' : `wardrobe/${target.id}`, target.id === null ? 'POST' : 'PATCH', body);
+ if (target.mode !== mode || target.user !== user) return;
+ if (existing) Object.assign(existing, saved); else items.unshift(saved);
+ render();
+ form.reset();
+ $('#message').textContent = existing ? 'Your clothing details are updated.' : 'Your new piece is in the wardrobe.';
+}
+$('#item-form').onsubmit=e=>{e.preventDefault();submit(e.target,()=>saveItemForm(e.target))};
 $('#profile-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k].trim()||null;if(mode==='demo'){profile=body;suggestions=demoSuggestions()}else{profile=await api('style-profile','PATCH',body);suggestions=await api('style-suggestions')}render();$('#message').textContent='Style preferences updated.'})};
-$('#grid').onclick=async e=>{const b=e.target.closest('[data-wear]');if(!b)return;b.disabled=true;try{const id=Number(b.dataset.wear),i=items.find(x=>x.item_id===id);if(mode==='demo')i.times_worn++;else Object.assign(i,await api(`wardrobe/${id}/wear`,'POST'));render();$('#message').textContent=`One more wear for ${i.item_name}.`}catch(error){$('#message').textContent=error.message;b.disabled=false}};
+$('#grid').onclick=async e=>{const edit=e.target.closest('[data-edit]');if(edit){const item=items.find(i=>i.item_id===Number(edit.dataset.edit));if(item)openItemForm(item);return;}const b=e.target.closest('[data-wear]');if(!b)return;b.disabled=true;try{const id=Number(b.dataset.wear),i=items.find(x=>x.item_id===id);if(mode==='demo')i.times_worn++;else Object.assign(i,await api(`wardrobe/${id}/wear`,'POST'));render();$('#message').textContent=`One more wear for ${i.item_name}.`}catch(error){$('#message').textContent=error.message;b.disabled=false}};
 initColorGuide();
 demo();
 
