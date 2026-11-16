@@ -50,3 +50,9 @@ nav .nav-icon{width:25px;height:25px;flex:0 0 25px;filter:drop-shadow(1px 2px 0 
 .card:nth-child(even) .clothing-sticker{transform:rotate(3deg)}
 .card:hover .clothing-sticker{transform:rotate(0deg) translateY(-3px)}
 @media(prefers-reduced-motion:reduce){.card-art .clothing-sticker{transition:none}.card:hover .clothing-sticker{transform:none}}
+
+/* Saved garment details stay readable on narrow wardrobe cards. */
+.clothing-details{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.clothing-details div{max-width:100%;background:#fff0f7;border:1px solid #edbed3;border-radius:6px;padding:5px 7px;font-size:10px;overflow-wrap:anywhere}
+.clothing-details dt{color:var(--muted);font-size:9px}
+.clothing-details dd{margin:2px 0 0;color:var(--ink)}

@@ -52,9 +52,15 @@ function render(){
  $('#swatches').innerHTML=(suggestions.palette||[]).map(c=>`<div class="swatch" style="background:${colors[c]||'#a4a88e'}" title="${esc(c)}" role="img" aria-label="${esc(c)}"></div>`).join('');
  $('#suggestions').innerHTML=(suggestions.suggestions||[]).map(s=>`<article class="suggestion"><h3>${esc(s.item_name)} ↗</h3><p>${esc(s.reason)}</p><small>TRY IT IN ${(s.suggested_colors||[]).map(esc).join(' · ')}</small></article>`).join('')||'<p>Add a style profile to see color and silhouette ideas.</p>';
 }
+function clothingDetails(item) {
+ const details = [['subcategory', 'Type'], ['material', 'Material'], ['pattern', 'Pattern']]
+  .filter(([key]) => typeof item[key] === 'string' && item[key].trim());
+ return details.length ? `<dl class="clothing-details">${details.map(([key, label]) =>
+  `<div><dt>${label}</dt><dd>${esc(item[key].trim())}</dd></div>`).join('')}</dl>` : '';
+}
 function renderGrid(){const filtered=filterWardrobe(items,$('#search').value,category);
  $('#search-status').textContent=`${filtered.length} of ${items.length} pieces shown`;
- $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div><button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces here yet. Add a piece or try another search.</div>';
+ $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces here yet. Add a piece or try another search.</div>';
 }
 function show(id){const d=$(id);d.querySelector('.form-error').textContent='';d.showModal();}
 $('#hero-art').innerHTML=art('Outerwear','Cream');
