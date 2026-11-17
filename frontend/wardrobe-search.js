@@ -11,4 +11,12 @@ function filterWardrobe(items, query, category = '', missingOnly = false) {
   return terms.every(term => values.some(value => value.includes(term)));
  });
 }
-if (typeof module !== 'undefined') module.exports = {filterWardrobe};
+function sortWardrobe(items, order = 'default') {
+ const sorted = [...items];
+ const name = (a, b) => String(a.item_name ?? '').localeCompare(String(b.item_name ?? ''), 'en', {sensitivity: 'base'}) || a.item_id - b.item_id;
+ if (order === 'name') sorted.sort(name);
+ if (order === 'least-worn') sorted.sort((a, b) => (a.times_worn ?? 0) - (b.times_worn ?? 0) || name(a, b));
+ if (order === 'most-worn') sorted.sort((a, b) => (b.times_worn ?? 0) - (a.times_worn ?? 0) || name(a, b));
+ return sorted;
+}
+if (typeof module !== 'undefined') module.exports = {filterWardrobe, sortWardrobe};
