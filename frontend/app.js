@@ -59,6 +59,7 @@ function clothingDetails(item) {
   `<div><dt>${label}</dt><dd>${esc(item[key].trim())}</dd></div>`).join('')}</dl>` : '';
 }
 function renderGrid(){const filtered=filterWardrobe(items,$('#search').value,category,$('#missing-details-only').checked);
+ $('#clear-wardrobe-filters').disabled = !($('#search').value || category || $('#missing-details-only').checked);
  $('#search-status').textContent=`${filtered.length} of ${items.length} pieces shown`;
  $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces match these filters. Try another search, choose All pieces, or turn off Missing details only.</div>';
 }
@@ -66,6 +67,16 @@ function show(id){const d=$(id);d.querySelector('.form-error').textContent='';d.
 $('#hero-art').innerHTML=art('Outerwear','Cream');
 $('#search').addEventListener('input',renderGrid);
 $('#missing-details-only').addEventListener('change',renderGrid);
+function clearWardrobeFilters() {
+ $('#search').value = '';
+ $('#missing-details-only').checked = false;
+ category = '';
+ document.querySelectorAll('[data-category]').forEach(button => button.classList.toggle('selected', button.dataset.category === ''));
+ renderGrid();
+ $('#search').focus();
+}
+$('#clear-wardrobe-filters').onclick = clearWardrobeFilters;
+
 $('.filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.classList.toggle('selected',x===b));renderGrid()});
 $('#add').onclick=()=>openItemForm();$('#connection').onclick=()=>show('#connect-dialog');
 $('#edit-profile').onclick=()=>{const f=$('#profile-form');for(const key of ['color_season','undertone','body_type']){const v=profile[key]||'';f.elements[key].value=[...f.elements[key].options].find(o=>o.value.toLowerCase()===v.toLowerCase())?.value||'';}f.elements.preferred_styles.value=profile.preferred_styles||'';show('#profile-dialog')};
