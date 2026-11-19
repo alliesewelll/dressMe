@@ -44,3 +44,15 @@ assert.deepEqual(ids(sortWardrobe(filterWardrobe(sortable, 'apple'), 'least-worn
 sortable[2].times_worn = 5;
 assert.deepEqual(ids(sortWardrobe(sortable, 'least-worn')), [2,3,1]);
 console.log('Sorting checks passed: wear counts, names, ties, filtering, and unchanged source order.');
+const wearItems = [
+ {item_id:1,item_name:'Pink shirt',category:'Tops',times_worn:0},
+ {item_id:2,item_name:'Pink skirt',category:'Bottoms',times_worn:3},
+ {item_id:3,item_name:'Blue shirt',category:'Tops',times_worn:0},
+];
+assert.deepEqual(ids(filterWardrobe(wearItems, '', '', false, true)), [1,3]);
+assert.deepEqual(ids(filterWardrobe(wearItems, 'pink', 'Tops', true, true)), [1]);
+assert.deepEqual(filterWardrobe(wearItems, '', 'Bottoms', false, true), []);
+assert.deepEqual(ids(filterWardrobe(wearItems, '')), [1,2,3]);
+wearItems[0].times_worn++;
+assert.deepEqual(ids(filterWardrobe(wearItems, '', '', false, true)), [3]);
+console.log('Unworn filtering checks passed, including combined filters and logging a wear.');

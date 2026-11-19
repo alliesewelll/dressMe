@@ -58,19 +58,21 @@ function clothingDetails(item) {
  return details.length ? `<dl class="clothing-details">${details.map(([key, label]) =>
   `<div><dt>${label}</dt><dd>${esc(item[key].trim())}</dd></div>`).join('')}</dl>` : '';
 }
-function renderGrid(){const filtered=sortWardrobe(filterWardrobe(items,$('#search').value,category,$('#missing-details-only').checked),$('#wardrobe-sort').value);
- $('#clear-wardrobe-filters').disabled = !($('#search').value || category || $('#missing-details-only').checked);
+function renderGrid(){const filtered=sortWardrobe(filterWardrobe(items,$('#search').value,category,$('#missing-details-only').checked,$('#unworn-only').checked),$('#wardrobe-sort').value);
+ $('#clear-wardrobe-filters').disabled = !($('#search').value || category || $('#missing-details-only').checked || $('#unworn-only').checked);
  $('#search-status').textContent=`${filtered.length} of ${items.length} pieces shown`;
- $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces match these filters. Try another search, choose All pieces, or turn off Missing details only.</div>';
+ $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces match these filters. Try another search or use Clear filters to see your full wardrobe.</div>';
 }
 function show(id){const d=$(id);d.querySelector('.form-error').textContent='';d.showModal();}
 $('#hero-art').innerHTML=art('Outerwear','Cream');
 $('#search').addEventListener('input',renderGrid);
 $('#wardrobe-sort').addEventListener('change',renderGrid);
 $('#missing-details-only').addEventListener('change',renderGrid);
+$('#unworn-only').addEventListener('change',renderGrid);
 function clearWardrobeFilters() {
  $('#search').value = '';
  $('#missing-details-only').checked = false;
+ $('#unworn-only').checked = false;
  category = '';
  document.querySelectorAll('[data-category]').forEach(button => button.classList.toggle('selected', button.dataset.category === ''));
  renderGrid();
