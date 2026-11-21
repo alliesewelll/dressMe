@@ -6,9 +6,11 @@
  const categoryFilter = document.querySelector('#match-category');
  const strengthFilter = document.querySelector('#match-strength');
  let generation = 0;
+ let shownIds = new Set();
  function reset() {
   generation++;
   results.innerHTML = '';
+  shownIds.clear();
   button.disabled = mode !== 'live';
   status.textContent = mode === 'live'
    ? 'Find pieces that match your saved palette and style preferences.'
@@ -19,11 +21,13 @@
   const ticket = ++generation;
   button.disabled = true;
   results.innerHTML = '';
+  shownIds.clear();
   status.textContent = 'Finding your matches…';
   try {
    const response = await api('wardrobe-ranking?limit=5&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
-   results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p><small>${item.score} / 3 matching points</small></article>`).join('');
+   shownIds = new Set(response.items.map(item => item.item_id));
+   results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p><small>${item.score} / 3 matching points</small><button class="text-button" data-match-edit="${esc(item.item_id)}" aria-label="Edit details for ${esc(item.item_name)}">Edit details ↗</button></article>`).join('');
    status.textContent = response.items.length
     ? 'Your top wardrobe matches. Points reflect exact or related palette colors and style-keyword matches, not confidence.'
     : Number(strengthFilter.value) > 0 ? 'No pieces meet these filters. Try Explore all pieces, another category, or update your style preferences.' : categoryFilter.value ? 'No pieces in this category yet. Try All clothing or add a piece.' : 'Add a piece to your wardrobe to get started.';
@@ -37,6 +41,18 @@
   } finally {
    if (ticket === generation) button.disabled = false;
   }
+ };
+ results.onclick = event => {
+  const edit = event.target.closest('[data-match-edit]');
+  if (!edit || mode !== 'live') return;
+  const id = Number(edit.dataset.matchEdit);
+  if (!shownIds.has(id)) return;
+  const item = items.find(piece => piece.item_id === id);
+  if (!item) {
+   status.textContent = 'This piece is no longer loaded. Reconnect your wardrobe and find matches again.';
+   return;
+  }
+  openItemForm(item);
  };
  // Any wardrobe or preference edit invalidates the previous ranking.
  categoryFilter.onchange = reset;
