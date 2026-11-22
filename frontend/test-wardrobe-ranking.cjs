@@ -51,6 +51,19 @@ vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context
  request=button.onclick();
  resolve({items:[],coverage:{candidate_count:0,matching_item_count:0,eligible_count:0}});await request;
  assert.doesNotMatch(status.textContent,/0 of 0|NaN/);
+
+ for (const [match, points, label] of [['exact',2,'Exact palette color'],['related',1,'Related palette shade'],['none',0,'No palette match']]) {
+  request=button.onclick();
+  resolve({items:[{item_id:7,item_name:'Shirt',score:points+1,reasons:[],breakdown:{color_match:match,color_points:points,style_points:1,matched_style_keywords:['<linen>','casual']}}]});
+  await request;
+  assert.ok(results.innerHTML.includes(label));
+  assert.ok(results.innerHTML.includes(`${points} / 2 points`));
+  assert.match(results.innerHTML,/1 \/ 1 point/);
+  assert.match(results.innerHTML,/Matched keywords: &lt;linen>, casual/);
+ }
+ request=button.onclick();
+ resolve({items:[{item_id:7,item_name:'Shirt',score:0,reasons:[],breakdown:{color_match:'none',color_points:0,style_points:0,matched_style_keywords:[]}}]});await request;
+ assert.match(results.innerHTML,/0 \/ 1 point/);assert.doesNotMatch(results.innerHTML,/Matched keywords:/);
  context.api=async()=>{throw new Error('Offline')};await button.onclick();
  assert.match(status.textContent,/Try again/);assert.equal(button.disabled,false);
  console.log('Wardrobe match rendering, empty/error, demo, and stale-response checks passed.');

@@ -7,6 +7,13 @@
  const strengthFilter = document.querySelector('#match-strength');
  let generation = 0;
  let shownIds = new Set();
+ function scoreDetails(item) {
+  const detail = item.breakdown;
+  if (!detail) return '';
+  const colorLabel = {exact: 'Exact palette color', related: 'Related palette shade', none: 'No palette match'}[detail.color_match] || 'Palette color';
+  return `<dl class="clothing-details"><div><dt>${esc(colorLabel)}</dt><dd>${esc(detail.color_points)} / 2 points</dd></div><div><dt>Style keywords</dt><dd>${esc(detail.style_points)} / 1 point</dd></div></dl>`
+   + (detail.matched_style_keywords?.length ? `<p class="fine">Matched keywords: ${detail.matched_style_keywords.map(esc).join(', ')}.</p>` : '');
+ }
  function reset() {
   generation++;
   results.innerHTML = '';
@@ -27,7 +34,7 @@
    const response = await api('wardrobe-ranking?limit=5&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
    shownIds = new Set(response.items.map(item => item.item_id));
-   results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p><small>${item.score} / 3 matching points</small><button class="text-button" data-match-edit="${esc(item.item_id)}" aria-label="Edit details for ${esc(item.item_name)}">Edit details ↗</button></article>`).join('');
+   results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p>${scoreDetails(item)}<small>${item.score} / 3 matching points</small><button class="text-button" data-match-edit="${esc(item.item_id)}" aria-label="Edit details for ${esc(item.item_name)}">Edit details ↗</button></article>`).join('');
    status.textContent = response.items.length
     ? 'Your top wardrobe matches. Points reflect exact or related palette colors and style-keyword matches, not confidence.'
     : Number(strengthFilter.value) > 0 ? 'No pieces meet these filters. Try Explore all pieces, another category, or update your style preferences.' : categoryFilter.value ? 'No pieces in this category yet. Try All clothing or add a piece.' : 'Add a piece to your wardrobe to get started.';
