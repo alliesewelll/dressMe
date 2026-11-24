@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category','#match-strength'].map(id=>[id, {}]));
+const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category','#match-strength','#match-limit'].map(id=>[id, {}]));
 const events = {};
 let resolve, requestedPath, opened;
 const context = vm.createContext({items:[{item_id:7,item_name:'Top',times_worn:4}],openItemForm:item=>opened=item,document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:path=>{requestedPath=path;return new Promise(r=>resolve=r)},esc:s=>String(s).replaceAll('<','&lt;')});
@@ -64,6 +64,18 @@ vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context
  request=button.onclick();
  resolve({items:[{item_id:7,item_name:'Shirt',score:0,reasons:[],breakdown:{color_match:'none',color_points:0,style_points:0,matched_style_keywords:[]}}]});await request;
  assert.match(results.innerHTML,/0 \/ 1 point/);assert.doesNotMatch(results.innerHTML,/Matched keywords:/);
+
+ nodes['#match-limit'].value='20';nodes['#match-limit'].onchange();
+ assert.equal(results.innerHTML,'');
+ request=button.onclick();assert.match(requestedPath,/limit=20&/);
+ nodes['#match-limit'].value='10';nodes['#match-limit'].onchange();
+ resolve({items:[{item_id:7,item_name:'Old limit',score:0,reasons:[]}]});await request;
+ assert.equal(results.innerHTML,'');
+ request=button.onclick();assert.match(requestedPath,/limit=10&/);
+ resolve({items:[]});await request;
+ nodes['#match-limit'].value='50';nodes['#match-limit'].onchange();
+ request=button.onclick();assert.match(requestedPath,/limit=50&/);
+ resolve({items:[]});await request;
  context.api=async()=>{throw new Error('Offline')};await button.onclick();
  assert.match(status.textContent,/Try again/);assert.equal(button.disabled,false);
  console.log('Wardrobe match rendering, empty/error, demo, and stale-response checks passed.');

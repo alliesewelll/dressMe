@@ -5,6 +5,7 @@
  const results = document.querySelector('#wardrobe-matches');
  const categoryFilter = document.querySelector('#match-category');
  const strengthFilter = document.querySelector('#match-strength');
+ const limitFilter = document.querySelector('#match-limit');
  let generation = 0;
  let shownIds = new Set();
  function scoreDetails(item) {
@@ -31,7 +32,7 @@
   shownIds.clear();
   status.textContent = 'Finding your matches…';
   try {
-   const response = await api('wardrobe-ranking?limit=5&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
+   const response = await api('wardrobe-ranking?limit=' + encodeURIComponent(limitFilter.value || '5') + '&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
    shownIds = new Set(response.items.map(item => item.item_id));
    results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p>${scoreDetails(item)}<small>${item.score} / 3 matching points</small><button class="text-button" data-match-edit="${esc(item.item_id)}" aria-label="Edit details for ${esc(item.item_name)}">Edit details ↗</button></article>`).join('');
@@ -64,6 +65,7 @@
  // Any wardrobe or preference edit invalidates the previous ranking.
  categoryFilter.onchange = reset;
  strengthFilter.onchange = reset;
+ limitFilter.onchange = reset;
  window.addEventListener('wardrobe-context', reset);
  reset();
 })();
