@@ -8,6 +8,17 @@
  const limitFilter = document.querySelector('#match-limit');
  let generation = 0;
  let shownIds = new Set();
+ function refreshCategories() {
+  const selected = (categoryFilter.value || '').trim().toLowerCase();
+  const categories = new Map();
+  for (const value of ['Tops', 'Bottoms', 'Dresses', 'Outerwear', 'Shoes', 'Accessories', ...items.map(item => item.category)]) {
+   const label = (value || '').trim();
+   if (label && !categories.has(label.toLowerCase())) categories.set(label.toLowerCase(), label);
+  }
+  categoryFilter.replaceChildren(new Option('All clothing', ''),
+   ...[...categories.values()].map(label => new Option(label, label)));
+  categoryFilter.value = categories.get(selected) || '';
+ }
  function scoreDetails(item) {
   const detail = item.breakdown;
   if (!detail) return '';
@@ -66,6 +77,7 @@
  categoryFilter.onchange = reset;
  strengthFilter.onchange = reset;
  limitFilter.onchange = reset;
- window.addEventListener('wardrobe-context', reset);
+ window.addEventListener('wardrobe-context', () => { refreshCategories(); reset(); });
+ refreshCategories();
  reset();
 })();
