@@ -58,10 +58,14 @@ function clothingDetails(item) {
  return details.length ? `<dl class="clothing-details">${details.map(([key, label]) =>
   `<div><dt>${label}</dt><dd>${esc(item[key].trim())}</dd></div>`).join('')}</dl>` : '';
 }
+function emptyWardrobeMessage() {
+ if (!items.length) return '<div class="empty"><h3>Your wardrobe starts here.</h3><p>Add your first piece to start exploring your closet.</p><button class="primary" data-empty-action="add">Add a piece</button></div>';
+ return '<div class="empty"><h3>No pieces match these filters.</h3><p>Your clothes are still here. Clear the filters to see your full wardrobe.</p><button class="quiet" data-empty-action="clear">Show all pieces</button></div>';
+}
 function renderGrid(){const filtered=sortWardrobe(filterWardrobe(items,$('#search').value,category,$('#missing-details-only').checked,$('#unworn-only').checked),$('#wardrobe-sort').value);
  $('#clear-wardrobe-filters').disabled = !($('#search').value || category || $('#missing-details-only').checked || $('#unworn-only').checked);
  $('#search-status').textContent=`${filtered.length} of ${items.length} pieces shown`;
- $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||'<div class="empty">No pieces match these filters. Try another search or use Clear filters to see your full wardrobe.</div>';
+ $('#grid').innerHTML=filtered.map(i=>`<article class="card"><div class="card-art"><span class="wear-badge">${i.times_worn?i.times_worn+(i.times_worn===1?' wear':' wears'):'A fresh favorite'}</span>${art(i.category,i.primary_color)}</div><h3>${esc(i.item_name)}</h3><div class="card-meta"><span>${esc(i.brand||i.category||'Your wardrobe')}</span><span>${esc(i.primary_color||'')}</span></div>${clothingDetails(i)}<button class="text-button" data-edit="${i.item_id}" aria-label="Edit ${esc(i.item_name)}">Edit details ↗</button><button class="wear-button" data-wear="${i.item_id}">＋ Wore it today</button></article>`).join('')||emptyWardrobeMessage();
 }
 function show(id){const d=$(id);d.querySelector('.form-error').textContent='';d.showModal();}
 $('#hero-art').innerHTML=art('Outerwear','Cream');
@@ -77,6 +81,13 @@ function clearWardrobeFilters() {
  document.querySelectorAll('[data-category]').forEach(button => button.classList.toggle('selected', button.dataset.category === ''));
  renderGrid();
  $('#search').focus();
+}
+function searchWardrobeKeyword(keyword) {
+ clearWardrobeFilters();
+ $('#search').value = keyword;
+ renderGrid();
+ $('#wardrobe').scrollIntoView({block: 'start'});
+ $('#search').focus({preventScroll: true});
 }
 $('#clear-wardrobe-filters').onclick = clearWardrobeFilters;
 
@@ -124,7 +135,7 @@ async function saveItemForm(form) {
 }
 $('#item-form').onsubmit=e=>{e.preventDefault();submit(e.target,()=>saveItemForm(e.target))};
 $('#profile-form').onsubmit=e=>{e.preventDefault();submit(e.target,async()=>{const body=Object.fromEntries(new FormData(e.target));for(const k in body)body[k]=body[k].trim()||null;if(mode==='demo'){profile=body;suggestions=demoSuggestions()}else{profile=await api('style-profile','PATCH',body);suggestions=await api('style-suggestions')}render();$('#message').textContent='Style preferences updated.'})};
-$('#grid').onclick=async e=>{const edit=e.target.closest('[data-edit]');if(edit){const item=items.find(i=>i.item_id===Number(edit.dataset.edit));if(item)openItemForm(item);return;}const b=e.target.closest('[data-wear]');if(!b)return;b.disabled=true;try{const id=Number(b.dataset.wear),i=items.find(x=>x.item_id===id);if(mode==='demo')i.times_worn++;else Object.assign(i,await api(`wardrobe/${id}/wear`,'POST'));render();$('#message').textContent=`One more wear for ${i.item_name}.`}catch(error){$('#message').textContent=error.message;b.disabled=false}};
+$('#grid').onclick=async e=>{const emptyAction=e.target.closest('[data-empty-action]');if(emptyAction){if(emptyAction.dataset.emptyAction==='add')openItemForm();else if(emptyAction.dataset.emptyAction==='clear')clearWardrobeFilters();return;}const edit=e.target.closest('[data-edit]');if(edit){const item=items.find(i=>i.item_id===Number(edit.dataset.edit));if(item)openItemForm(item);return;}const b=e.target.closest('[data-wear]');if(!b)return;b.disabled=true;try{const id=Number(b.dataset.wear),i=items.find(x=>x.item_id===id);if(mode==='demo')i.times_worn++;else Object.assign(i,await api(`wardrobe/${id}/wear`,'POST'));render();$('#message').textContent=`One more wear for ${i.item_name}.`}catch(error){$('#message').textContent=error.message;b.disabled=false}};
 initColorGuide();
 demo();
 

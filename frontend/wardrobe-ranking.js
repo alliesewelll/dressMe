@@ -8,6 +8,7 @@
  const limitFilter = document.querySelector('#match-limit');
  let generation = 0;
  let shownIds = new Set();
+ let shownKeywords = new Set();
  function refreshCategories() {
   const selected = (categoryFilter.value || '').trim().toLowerCase();
   const categories = new Map();
@@ -24,12 +25,13 @@
   if (!detail) return '';
   const colorLabel = {exact: 'Exact palette color', related: 'Related palette shade', none: 'No palette match'}[detail.color_match] || 'Palette color';
   return `<dl class="clothing-details"><div><dt>${esc(colorLabel)}</dt><dd>${esc(detail.color_points)} / 2 points</dd></div><div><dt>Style keywords</dt><dd>${esc(detail.style_points)} / 1 point</dd></div></dl>`
-   + (detail.matched_style_keywords?.length ? `<p class="fine">Matched keywords: ${detail.matched_style_keywords.map(esc).join(', ')}.</p>` : '');
+   + (detail.matched_style_keywords?.length ? `<p class="fine">Matched keywords: ${detail.matched_style_keywords.map(esc).join(', ')}.</p><div>${detail.matched_style_keywords.map(keyword => `<button class="text-button" data-match-keyword="${esc(keyword)}">Find more ${esc(keyword)} pieces ↗</button>`).join(' ')}</div>` : '');
  }
  function reset() {
   generation++;
   results.innerHTML = '';
   shownIds.clear();
+  shownKeywords.clear();
   button.disabled = mode !== 'live';
   status.textContent = mode === 'live'
    ? 'Find pieces that match your saved palette and style preferences.'
@@ -41,11 +43,13 @@
   button.disabled = true;
   results.innerHTML = '';
   shownIds.clear();
+  shownKeywords.clear();
   status.textContent = 'Finding your matches…';
   try {
    const response = await api('wardrobe-ranking?limit=' + encodeURIComponent(limitFilter.value || '5') + '&include_coverage=true&min_score=' + encodeURIComponent(strengthFilter.value || '0') + (categoryFilter.value ? '&category=' + encodeURIComponent(categoryFilter.value) : ''));
    if (ticket !== generation) return;
    shownIds = new Set(response.items.map(item => item.item_id));
+   shownKeywords = new Set(response.items.flatMap(item => item.breakdown?.matched_style_keywords || []));
    results.innerHTML = response.items.map(item => `<article class="suggestion"><h3>${esc(item.item_name)}</h3><p>${item.reasons.map(esc).join(' ')}</p>${scoreDetails(item)}<small>${item.score} / 3 matching points</small><button class="text-button" data-match-edit="${esc(item.item_id)}" aria-label="Edit details for ${esc(item.item_name)}">Edit details ↗</button></article>`).join('');
    status.textContent = response.items.length
     ? 'Your top wardrobe matches. Points reflect exact or related palette colors and style-keyword matches, not confidence.'
@@ -62,6 +66,12 @@
   }
  };
  results.onclick = event => {
+  const keyword = event.target.closest('[data-match-keyword]');
+  if (keyword && mode === 'live' && shownKeywords.has(keyword.dataset.matchKeyword)) {
+   searchWardrobeKeyword(keyword.dataset.matchKeyword);
+   return;
+  }
+
   const edit = event.target.closest('[data-match-edit]');
   if (!edit || mode !== 'live') return;
   const id = Number(edit.dataset.matchEdit);

@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const nodes = Object.fromEntries(['#load-wardrobe-matches','#wardrobe-match-status','#wardrobe-matches','#match-category','#match-strength','#match-limit'].map(id=>[id, {}]));
 nodes['#match-category'].replaceChildren = function(...options) {this.options = options;};
 const events = {};
-let resolve, requestedPath, opened;
-const context = vm.createContext({Option:function(text,value){this.text=text;this.value=value;},items:[{item_id:7,item_name:'Top',times_worn:4}],openItemForm:item=>opened=item,document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:path=>{requestedPath=path;return new Promise(r=>resolve=r)},esc:s=>String(s).replaceAll('<','&lt;')});
+let resolve, requestedPath, opened, searched;
+const context = vm.createContext({searchWardrobeKeyword:keyword=>searched=keyword,Option:function(text,value){this.text=text;this.value=value;},items:[{item_id:7,item_name:'Top',times_worn:4}],openItemForm:item=>opened=item,document:{querySelector:id=>nodes[id]},window:{addEventListener:(name,fn)=>events[name]=fn},mode:'demo',api:path=>{requestedPath=path;return new Promise(r=>resolve=r)},esc:s=>String(s).replaceAll('<','&lt;')});
 vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context);
 (async()=>{
  const button=nodes['#load-wardrobe-matches'], results=nodes['#wardrobe-matches'], status=nodes['#wardrobe-match-status'];
@@ -61,6 +61,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/wardrobe-ranking.js','utf8'),context
   assert.ok(results.innerHTML.includes(`${points} / 2 points`));
   assert.match(results.innerHTML,/1 \/ 1 point/);
   assert.match(results.innerHTML,/Matched keywords: &lt;linen>, casual/);
+ assert.match(results.innerHTML,/Find more casual pieces/);
+ results.onclick({target:{closest:selector=>selector==='[data-match-keyword]'?{dataset:{matchKeyword:'casual'}}:null}});
+ assert.equal(searched,'casual');searched=undefined;
+
  }
  request=button.onclick();
  resolve({items:[{item_id:7,item_name:'Shirt',score:0,reasons:[],breakdown:{color_match:'none',color_points:0,style_points:0,matched_style_keywords:[]}}]});await request;
