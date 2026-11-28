@@ -40,12 +40,23 @@ async function loadLive(){
  if(response.ok){p=await response.json();s=await api('style-suggestions');}else if(response.status!==404){throw new Error('Unable to load your style profile.');}
  items=all;profile=p;suggestions=s;mode='live';render();
 }
+function renderCategoryFilters() {
+ const categories = new Map();
+ for (const value of ['Tops', 'Bottoms', 'Outerwear', 'Dresses', 'Shoes', 'Accessories', ...items.map(item => item.category)]) {
+  const label = (value || '').trim();
+  if (label && !categories.has(label.toLowerCase())) categories.set(label.toLowerCase(), label);
+ }
+ category = categories.get(category.trim().toLowerCase()) || '';
+ $('.filters').innerHTML = [['', 'All pieces'], ...[...categories.values()].map(label => [label, label])]
+  .map(([value, label]) => `<button data-category="${esc(value)}" class="${category === value ? 'selected' : ''}" aria-pressed="${category === value}">${esc(label)}</button>`).join('');
+}
 function render(){
  window.dispatchEvent(new CustomEvent("wardrobe-context",{detail:{mode,user}}));
  $('#connection').textContent=mode==='demo'?'Demo wardrobe ↗':`User ${user} · Live wardrobe ↗`;
  $('#mode-note').textContent=mode==='demo'?'✧ Demo mode · Explore a sample closet. Changes last until you refresh.':'✧ Connected to your local backend · Changes are saved to your wardrobe.';
  $('#count').textContent=items.length;$('#wears').textContent=items.reduce((s,x)=>s+x.times_worn,0);$('#unworn').textContent=items.filter(x=>!x.times_worn).length;
  $('#item-count').textContent=`${items.length} pieces`;
+ renderCategoryFilters();
  renderGrid();
  $('#profile-copy').innerHTML=profile.color_season||profile.undertone||profile.body_type?`<p>${[profile.color_season&&profile.color_season+' palette',profile.undertone&&profile.undertone+' undertone',profile.body_type].filter(Boolean).map(esc).join(' · ')}</p>`:'<p>Set your preferences to find your starting palette.</p>';
  if(profile.preferred_styles) $('#profile-copy').innerHTML+=`<p>Your style: ${esc(profile.preferred_styles)}</p>`;
@@ -78,7 +89,7 @@ function clearWardrobeFilters() {
  $('#missing-details-only').checked = false;
  $('#unworn-only').checked = false;
  category = '';
- document.querySelectorAll('[data-category]').forEach(button => button.classList.toggle('selected', button.dataset.category === ''));
+ document.querySelectorAll('[data-category]').forEach(button => {button.classList.toggle('selected', button.dataset.category === '');button.setAttribute('aria-pressed', String(button.dataset.category === ''));});
  renderGrid();
  $('#search').focus();
 }
@@ -91,7 +102,7 @@ function searchWardrobeKeyword(keyword) {
 }
 $('#clear-wardrobe-filters').onclick = clearWardrobeFilters;
 
-$('.filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>x.classList.toggle('selected',x===b));renderGrid()});
+$('.filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('[data-category]').forEach(x=>{x.classList.toggle('selected',x===b);x.setAttribute('aria-pressed',String(x===b));});renderGrid()});
 $('#add').onclick=()=>openItemForm();$('#connection').onclick=()=>show('#connect-dialog');
 $('#edit-profile').onclick=()=>{const f=$('#profile-form');for(const key of ['color_season','undertone','body_type']){const v=profile[key]||'';f.elements[key].value=[...f.elements[key].options].find(o=>o.value.toLowerCase()===v.toLowerCase())?.value||'';}f.elements.preferred_styles.value=profile.preferred_styles||'';show('#profile-dialog')};
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
